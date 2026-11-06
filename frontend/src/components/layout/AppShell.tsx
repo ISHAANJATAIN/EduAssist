@@ -8,7 +8,7 @@ import { useCourse } from '@/hooks/useCourse'
 import { formatDate } from '@/lib/format'
 
 const pageTitles: Record<string, string> = {
-  '/': 'Chat',
+  '/chat': 'Chat',
   '/library': 'Library',
   '/dashboard': 'Dashboard',
   '/planner': 'Planner',

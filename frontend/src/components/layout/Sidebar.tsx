@@ -19,7 +19,7 @@ const navItems: {
   icon: ComponentType<{ size?: number }>
   end?: boolean
 }[] = [
-  { to: '/', label: 'Chat', icon: ChatIcon, end: true },
+  { to: '/chat', label: 'Chat', icon: ChatIcon, end: true },
   { to: '/library', label: 'Library', icon: LibraryIcon },
   { to: '/dashboard', label: 'Dashboard', icon: DashboardIcon },
   { to: '/planner', label: 'Planner', icon: PlannerIcon },

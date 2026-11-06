@@ -20,7 +20,7 @@ export function useAuth() {
     mutationFn: (payload: LoginIn) => loginRequest(payload),
     onSuccess: (data) => {
       setSession(data.access_token, data.user)
-      navigate('/', { replace: true })
+      navigate('/chat', { replace: true })
     },
   })
 
@@ -28,7 +28,7 @@ export function useAuth() {
     mutationFn: (payload: RegisterIn) => registerRequest(payload),
     onSuccess: (data) => {
       setSession(data.access_token, data.user)
-      navigate('/', { replace: true })
+      navigate('/chat', { replace: true })
     },
   })
 

@@ -12,6 +12,7 @@ and builds a day-by-day study plan around your exam date.
 - One chat entry point — an intent router sends each request to the right module and asks for a
   missing exam date instead of failing
 - Private by default — data stays on this machine, and Settings → Delete my data wipes it
+- Public landing page — a product overview at `/`; the signed-in app lives at `/chat`
 
 ## Stack
 | Layer | Choice |
@@ -43,14 +44,14 @@ Node.js 20.12+, Python 3.11, Docker Desktop, Ollama.
 6. `cd frontend && npm install && npm run dev`
 7. After API changes: `python backend/scripts/export_openapi.py && cd frontend && npm run gen:types`
 
-App: http://localhost:5173 · API docs: http://localhost:8000/docs
+Landing: http://localhost:5173 · App: http://localhost:5173/chat · API docs: http://localhost:8000/docs
 
 ## Run with Docker
 1. `ollama pull qwen3:8b` on the host (Ollama keeps running).
 2. `cp .env.example .env`, then set a real `JWT_SECRET`.
 3. `docker compose up --build`
 
-App: http://localhost:8080 · API docs: http://localhost:8000/docs
+Landing: http://localhost:8080 · App: http://localhost:8080/chat · API docs: http://localhost:8000/docs
 
 Compose starts Postgres, the FastAPI backend and an nginx frontend. nginx serves the SPA and proxies
 `/api` to the backend. Uploaded files, Chroma vectors and the embedding-model cache live in the

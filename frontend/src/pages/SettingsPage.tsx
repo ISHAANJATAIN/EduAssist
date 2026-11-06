@@ -36,7 +36,7 @@ export function SettingsPage() {
       useChatStore.getState().reset()
       queryClient.clear()
       setConfirming(false)
-      navigate('/', { replace: true })
+      navigate('/chat', { replace: true })
     },
     onError: () => setConfirming(false),
   })

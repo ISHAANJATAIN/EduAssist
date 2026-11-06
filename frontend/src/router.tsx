@@ -5,6 +5,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import { ChatPage } from '@/pages/ChatPage'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { LandingPage } from '@/pages/LandingPage'
 import { LibraryPage } from '@/pages/LibraryPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { PlannerPage } from '@/pages/PlannerPage'
@@ -15,6 +16,7 @@ export const router = createBrowserRouter([
   {
     element: <App />,
     children: [
+      { path: '/', element: <LandingPage /> },
       { path: '/login', element: <LoginPage /> },
       { path: '/register', element: <RegisterPage /> },
       {
@@ -23,7 +25,7 @@ export const router = createBrowserRouter([
           {
             element: <AppShell />,
             children: [
-              { index: true, element: <ChatPage /> },
+              { path: 'chat', element: <ChatPage /> },
               { path: 'library', element: <LibraryPage /> },
               { path: 'dashboard', element: <DashboardPage /> },
               { path: 'planner', element: <PlannerPage /> },

@@ -42,7 +42,7 @@ function renderPage() {
       <MemoryRouter initialEntries={['/settings']}>
         <Routes>
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/" element={<div>chat-home</div>} />
+          <Route path="/chat" element={<div>chat-home</div>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
