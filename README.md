@@ -34,7 +34,17 @@ No paid API is required. `LLM_PROVIDER=groq` with a free Groq key is an optional
 ## Prerequisites
 Node.js 20.12+, Python 3.11, Docker Desktop, Ollama.
 
-## Run locally (development)
+## Run locally (one command)
+From the repo root in Git Bash:
+```bash
+./dev.sh        # Postgres -> backend -> frontend, with health checks
+./dev.sh stop   # stop all three
+```
+The script waits for Postgres to be healthy and for both servers to answer, then prints the URLs.
+If a port is already held by a stale process it stops immediately and asks you to run `./dev.sh stop`.
+Logs go to `.dev-logs/` (git-ignored). Ctrl+C stops everything.
+
+## Run locally (manual)
 1. `ollama pull qwen3:8b`
 2. `cp .env.example .env`, then set a real `JWT_SECRET`
    (`python -c "import secrets; print(secrets.token_urlsafe(48))"`). Never commit `.env`.
