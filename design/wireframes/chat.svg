@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="wfTitle wfDesc">
+  <title id="wfTitle">EduAssist wireframe: chat home</title>
+  <desc id="wfDesc">Sidebar navigation, assistant answer card with citations, user bubble, quiz card, quick-action chips and input.</desc>
+  <style>
+    text { font-family: Inter, 'Segoe UI', system-ui, sans-serif; fill: #334155; }
+    .muted { fill: #475569; }
+    .tiny { font-size: 11px; }
+    .sm { font-size: 12px; }
+    .base { font-size: 14px; }
+    .lg { font-size: 16px; }
+    .h2 { font-size: 18px; font-weight: 600; fill: #0F172A; }
+    .semibold { font-weight: 600; }
+    .white { fill: #FFFFFF; }
+    .brand { fill: #4F46E5; }
+    .ph { fill: #64748B; }
+  </style>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#EEF2FF"/>
+      <stop offset="0.5" stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#E0F2FE"/>
+    </linearGradient>
+    <filter id="blob" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="90"/>
+    </filter>
+    <filter id="glassShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="20" flood-color="#0F172A" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+  <rect width="1440" height="900" fill="url(#bg)"/>
+  <g filter="url(#blob)" opacity="0.55">
+    <circle cx="1150" cy="110" r="230" fill="#A5B4FC"/>
+    <circle cx="390" cy="800" r="250" fill="#7DD3FC"/>
+    <circle cx="900" cy="470" r="260" fill="#C4B5FD"/>
+  </g>
+
+  <!-- Sidebar -->
+  <rect x="0" y="0" width="240" height="900" fill="#FFFFFF" fill-opacity="0.50"/>
+  <line x1="240" y1="0" x2="240" y2="900" stroke="#E2E8F0"/>
+
+  <rect x="24" y="22" width="28" height="28" rx="8" fill="#FFFFFF" stroke="#0F172A" stroke-opacity="0.12"/>
+  <path d="M33.4 30.75h9.1M33.4 41.25h9.1M33.4 30.75v10.5" fill="none" stroke="#0F172A" stroke-width="1.7" stroke-linecap="round"/>
+  <path d="M33.4 36h6.7" fill="none" stroke="#4F46E5" stroke-width="1.7" stroke-linecap="round"/>
+  <text x="62" y="42" font-size="16" font-weight="600" fill="#0F172A">EduAssist</text>
+
+  <rect x="16" y="104" width="208" height="40" rx="10" fill="#EEF2FF"/>
+  <rect x="28" y="115" width="18" height="18" rx="5" fill="#4F46E5"/>
+  <text x="58" y="129" class="base semibold" fill="#4F46E5">Chat</text>
+
+  <rect x="28" y="163" width="18" height="18" rx="5" fill="#CBD5E1"/>
+  <text x="58" y="177" class="base">Library</text>
+
+  <rect x="28" y="211" width="18" height="18" rx="5" fill="#CBD5E1"/>
+  <text x="58" y="225" class="base">Dashboard</text>
+
+  <rect x="28" y="259" width="18" height="18" rx="5" fill="#CBD5E1"/>
+  <text x="58" y="273" class="base">Planner</text>
+
+  <rect x="28" y="307" width="18" height="18" rx="5" fill="#CBD5E1"/>
+  <text x="58" y="321" class="base">Settings</text>
+
+  <line x1="16" y1="812" x2="224" y2="812" stroke="#E2E8F0"/>
+  <circle cx="36" cy="844" r="16" fill="#CBD5E1"/>
+  <text x="62" y="840" class="sm semibold">Ishan Jatain</text>
+  <text x="62" y="860" class="tiny muted">Log out</text>
+
+  <!-- Top bar -->
+  <rect x="240" y="0" width="1200" height="64" fill="#FFFFFF" fill-opacity="0.55"/>
+  <line x1="240" y1="64" x2="1440" y2="64" stroke="#E2E8F0"/>
+  <text x="272" y="40" class="h2">Chat</text>
+  <rect x="1150" y="18" width="180" height="30" rx="15" fill="#EEF2FF"/>
+  <text x="1240" y="38" text-anchor="middle" class="sm" fill="#4F46E5">AI · Exam 12 Dec</text>
+
+  <!-- Answer card -->
+  <rect x="272" y="96" width="640" height="132" rx="16" fill="#FFFFFF" fill-opacity="0.62" stroke="#FFFFFF" stroke-opacity="0.9" filter="url(#glassShadow)"/>
+  <text x="296" y="124" class="tiny muted">EduAssist</text>
+  <rect x="296" y="138" width="580" height="9" rx="4" fill="#E2E8F0"/>
+  <rect x="296" y="156" width="540" height="9" rx="4" fill="#E2E8F0"/>
+  <rect x="296" y="174" width="360" height="9" rx="4" fill="#E2E8F0"/>
+  <text x="296" y="208" class="tiny muted">Sources</text>
+  <rect x="350" y="194" width="132" height="22" rx="11" fill="#F1F5F9"/>
+  <text x="364" y="209" class="tiny" fill="#334155">lecture3.pdf · p.12</text>
+  <rect x="492" y="194" width="118" height="22" rx="11" fill="#F1F5F9"/>
+  <text x="506" y="209" class="tiny" fill="#334155">unit2.pptx · p.4</text>
+
+  <!-- User bubble -->
+  <rect x="632" y="244" width="400" height="52" rx="16" fill="#4F46E5"/>
+  <text x="656" y="276" class="base white">Explain gradient descent simply</text>
+
+  <!-- Quiz card -->
+  <rect x="272" y="312" width="600" height="300" rx="16" fill="#FFFFFF" fill-opacity="0.62" stroke="#FFFFFF" stroke-opacity="0.9" filter="url(#glassShadow)"/>
+  <text x="296" y="342" class="sm semibold">Quiz · Medium · 5 questions</text>
+  <rect x="744" y="322" width="104" height="24" rx="12" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="796" y="338" text-anchor="middle" class="tiny" fill="#4F46E5">Topic 1</text>
+
+  <text x="296" y="370" class="tiny muted">2 / 5</text>
+  <rect x="296" y="378" width="552" height="6" rx="3" fill="#E2E8F0"/>
+  <rect x="296" y="378" width="221" height="6" rx="3" fill="#4F46E5"/>
+
+  <text x="296" y="410" class="base semibold">Which update rule minimizes the training loss?</text>
+
+  <rect x="296" y="424" width="552" height="30" rx="8" fill="#FFFFFF" fill-opacity="0.62" stroke="#FFFFFF" stroke-opacity="0.9" filter="url(#glassShadow)"/>
+  <circle cx="312" cy="439" r="6" fill="#FFFFFF" fill-opacity="0.72" stroke="#CBD5E1"/>
+  <text x="330" y="444" class="sm">A. Random search</text>
+
+  <rect x="296" y="460" width="552" height="30" rx="8" fill="#EEF2FF" stroke="#4F46E5"/>
+  <circle cx="312" cy="475" r="6" fill="#4F46E5"/>
+  <text x="330" y="480" class="sm semibold" fill="#4F46E5">B. Gradient descent</text>
+
+  <rect x="296" y="496" width="552" height="30" rx="8" fill="#FFFFFF" fill-opacity="0.62" stroke="#FFFFFF" stroke-opacity="0.9" filter="url(#glassShadow)"/>
+  <circle cx="312" cy="511" r="6" fill="#FFFFFF" fill-opacity="0.72" stroke="#CBD5E1"/>
+  <text x="330" y="516" class="sm">C. Sorting by score</text>
+
+  <rect x="296" y="532" width="552" height="30" rx="8" fill="#FFFFFF" fill-opacity="0.62" stroke="#FFFFFF" stroke-opacity="0.9" filter="url(#glassShadow)"/>
+  <circle cx="312" cy="547" r="6" fill="#FFFFFF" fill-opacity="0.72" stroke="#CBD5E1"/>
+  <text x="330" y="552" class="sm">D. Hashing the inputs</text>
+
+  <rect x="296" y="574" width="120" height="30" rx="8" fill="#CBD5E1"/>
+  <text x="356" y="594" text-anchor="middle" class="sm semibold" fill="#FFFFFF">Submit</text>
+
+  <!-- Annotation -->
+  <rect x="1064" y="96" width="336" height="210" rx="12" fill="#FFFFFF" fill-opacity="0.45" stroke="#FFFFFF" stroke-opacity="0.9" stroke-dasharray="6 4"/>
+  <text x="1084" y="124" class="sm semibold">Reply types</text>
+  <text x="1084" y="146" class="tiny muted">answer · quiz · performance</text>
+  <text x="1084" y="164" class="tiny muted">plan · clarify</text>
+  <text x="1084" y="196" class="sm semibold">States</text>
+  <text x="1084" y="218" class="tiny muted">pending: typing dots</text>
+  <text x="1084" y="236" class="tiny muted">not covered: info banner</text>
+  <text x="1084" y="254" class="tiny muted">error: banner + Retry</text>
+  <text x="1084" y="272" class="tiny muted">clarify: inline mini-form</text>
+  <text x="1084" y="290" class="tiny muted">chat column max 760 px</text>
+
+  <!-- Quick actions -->
+  <rect x="272" y="656" width="92" height="32" rx="16" fill="#FFFFFF" fill-opacity="0.72" stroke="#CBD5E1"/>
+  <text x="318" y="676" text-anchor="middle" class="sm">Quiz me</text>
+  <rect x="376" y="656" width="108" height="32" rx="16" fill="#FFFFFF" fill-opacity="0.72" stroke="#CBD5E1"/>
+  <text x="430" y="676" text-anchor="middle" class="sm">Flashcards</text>
+  <rect x="496" y="656" width="116" height="32" rx="16" fill="#FFFFFF" fill-opacity="0.72" stroke="#CBD5E1"/>
+  <text x="554" y="676" text-anchor="middle" class="sm">My progress</text>
+  <rect x="624" y="656" width="146" height="32" rx="16" fill="#FFFFFF" fill-opacity="0.72" stroke="#CBD5E1"/>
+  <text x="697" y="676" text-anchor="middle" class="sm">Plan my revision</text>
+
+  <!-- Input -->
+  <rect x="272" y="708" width="760" height="64" rx="16" fill="#FFFFFF" fill-opacity="0.72" stroke="#CBD5E1"/>
+  <text x="296" y="746" class="base ph">Ask anything from your uploaded material…</text>
+  <rect x="976" y="718" width="44" height="44" rx="10" fill="#4F46E5"/>
+  <path d="M990 740h16m0 0l-6-6m6 6l-6 6" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <text x="1404" y="880" text-anchor="end" class="tiny muted">WF-2 · Chat (single entry point) · 1440 x 900</text>
+</svg>

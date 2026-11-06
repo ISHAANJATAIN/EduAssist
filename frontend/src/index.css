@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply min-h-screen bg-glass-backdrop bg-fixed font-sans text-base text-neutral-700;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white/60;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply rounded-lg border border-white/90 bg-white/62 shadow-glass backdrop-blur-glass backdrop-saturate-150;
+  }
+
+  .glass-raised {
+    @apply rounded-md border border-white/90 bg-white/72 backdrop-blur-glass backdrop-saturate-150;
+  }
+
+  .glass-strong {
+    @apply rounded-lg border border-white/90 bg-white/90 shadow-popover backdrop-blur-glass backdrop-saturate-150;
+  }
+
+  .field-label {
+    @apply mb-1.5 block text-sm font-semibold text-neutral-700;
+  }
+
+  .field-input {
+    @apply h-11 w-full rounded-md border border-neutral-300 bg-white/72 px-3 text-base text-neutral-700 placeholder:text-neutral-500 focus:border-brand-500;
+  }
+
+  .field-hint {
+    @apply mt-1.5 text-xs text-neutral-500;
+  }
+}
+
+@supports not (backdrop-filter: blur(20px)) {
+  .glass,
+  .glass-raised {
+    background-color: rgba(255, 255, 255, 0.94);
+  }
+
+  .glass-strong {
+    background-color: #ffffff;
+  }
+}

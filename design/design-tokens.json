@@ -1,0 +1,41 @@
+{
+  "$comment": "Source of truth for visual style. frontend/tailwind.config.ts is built from this file in Phase 1. Text on white/neutral-50/tinted backgrounds uses the *Text colours (all >= 4.5:1); base status colours are for fills, icons, borders and charts. brand-500 is for focus rings and fills only; brand-600 for brand text. Chip text on neutral-100 uses neutral-700.",
+  "color": {
+    "brand": { "50": "#EEF2FF", "100": "#E0E7FF", "500": "#6366F1", "600": "#4F46E5", "700": "#4338CA" },
+    "brandText": "#4F46E5",
+    "neutral": { "0": "#FFFFFF", "50": "#F8FAFC", "100": "#F1F5F9", "200": "#E2E8F0", "300": "#CBD5E1", "500": "#64748B", "700": "#334155", "900": "#0F172A" },
+    "status": {
+      "success": "#16A34A", "successBg": "#DCFCE7", "successText": "#15803D",
+      "warning": "#D97706", "warningBg": "#FEF3C7", "warningText": "#B45309",
+      "danger": "#DC2626", "dangerBg": "#FEE2E2", "dangerText": "#B91C1C",
+      "info": "#0284C7", "infoBg": "#E0F2FE", "infoText": "#0369A1"
+    },
+    "mastery": { "untested": "#94A3B8", "weak": "#DC2626", "developing": "#D97706", "strong": "#16A34A" },
+    "doc": { "processing": "#D97706", "ready": "#16A34A", "failed": "#DC2626" },
+    "plan": { "study": "#4F46E5", "revision": "#D97706" }
+  },
+  "font": {
+    "family": { "sans": "Inter, system-ui, sans-serif", "mono": "JetBrains Mono, ui-monospace, monospace" },
+    "size": { "xs": "12px", "sm": "14px", "base": "16px", "lg": "18px", "xl": "20px", "2xl": "24px", "3xl": "30px" },
+    "weight": { "regular": 400, "medium": 500, "semibold": 600 },
+    "lineHeight": { "tight": 1.25, "normal": 1.5 }
+  },
+  "space": { "1": "4px", "2": "8px", "3": "12px", "4": "16px", "6": "24px", "8": "32px", "12": "48px" },
+  "radius": { "sm": "6px", "md": "10px", "lg": "16px", "full": "9999px" },
+  "shadow": { "card": "0 1px 3px rgba(15,23,42,0.08)", "popover": "0 8px 24px rgba(15,23,42,0.14)", "glass": "0 10px 32px rgba(15,23,42,0.10)" },
+  "glass": {
+    "$comment": "Frosted surfaces over a fixed gradient backdrop. Cards use surface; inputs and inner tiles step lighter so controls stay legible. Dialog and menu surfaces must be >= 0.90 so dense text keeps 4.5:1. Text on glass uses neutral-700 body / neutral-600 muted; never place neutral-500 text on glass.",
+    "backdrop": "linear-gradient(135deg, #EEF2FF 0%, #F8FAFC 50%, #E0F2FE 100%)",
+    "blob": ["#A5B4FC", "#7DD3FC", "#C4B5FD"],
+    "blobOpacity": 0.55,
+    "surface": "rgba(255,255,255,0.62)",
+    "surfaceRaised": "rgba(255,255,255,0.72)",
+    "surfaceStrong": "rgba(255,255,255,0.90)",
+    "border": "rgba(255,255,255,0.90)",
+    "blur": "20px",
+    "saturation": "140%",
+    "fallback": "#FFFFFF",
+    "fallbackOpacity": 0.94
+  },
+  "layout": { "sidebarWidth": "240px", "contentMaxWidth": "960px", "chatMaxWidth": "760px", "breakpoints": { "sm": "640px", "md": "768px", "lg": "1024px" } }
+}

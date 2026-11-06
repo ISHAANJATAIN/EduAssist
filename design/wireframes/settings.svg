@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="wfTitle wfDesc">
+  <title id="wfTitle">EduAssist wireframe: settings</title>
+  <desc id="wfDesc">Course settings, privacy notice, danger zone and the typed-confirmation delete dialog.</desc>
+  <defs>
+    <filter id="dialogShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#0F172A" flood-opacity="0.16"/>
+    </filter>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#EEF2FF"/>
+      <stop offset="0.5" stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#E0F2FE"/>
+    </linearGradient>
+    <filter id="blob" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="90"/>
+    </filter>
+    <filter id="glassShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="20" flood-color="#0F172A" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+  <style>
+    text { font-family: Inter, 'Segoe UI', system-ui, sans-serif; fill: #334155; }
+    .muted { fill: #475569; }
+    .tiny { font-size: 11px; }
+    .sm { font-size: 12px; }
+    .base { font-size: 14px; }
+    .h2 { font-size: 18px; font-weight: 600; fill: #0F172A; }
+    .semibold { font-weight: 600; }
+    .white { fill: #FFFFFF; }
+  </style>
+
+  <rect width="1440" height="900" fill="url(#bg)"/>
+  <g filter="url(#blob)" opacity="0.55">
+    <circle cx="1150" cy="110" r="230" fill="#A5B4FC"/>
+    <circle cx="390" cy="800" r="250" fill="#7DD3FC"/>
+    <circle cx="900" cy="470" r="260" fill="#C4B5FD"/>
+  </g>
+
+  <!-- Sidebar -->
+  <rect x="0" y="0" width="240" height="900" fill="#FFFFFF" fill-opacity="0.50"/>
+  <line x1="240" y1="0" x2="240" y2="900" stroke="#E2E8F0"/>
+  <rect x="24" y="22" width="28" height="28" rx="8" fill="#FFFFFF" stroke="#0F172A" stroke-opacity="0.12"/>
+  <path d="M33.4 30.75h9.1M33.4 41.25h9.1M33.4 30.75v10.5" fill="none" stroke="#0F172A" stroke-width="1.7" stroke-linecap="round"/>
+  <path d="M33.4 36h6.7" fill="none" stroke="#4F46E5" stroke-width="1.7" stroke-linecap="round"/>
+  <text x="62" y="42" font-size="16" font-weight="600" fill="#0F172A">EduAssist</text>
+
+  <rect x="28" y="115" width="18" height="18" rx="5" fill="#CBD5E1"/>
+  <text x="58" y="129" class="base">Chat</text>
+  <rect x="28" y="163" width="18" height="18" rx="5" fill="#CBD5E1"/>
+  <text x="58" y="177" class="base">Library</text>
+  <rect x="28" y="211" width="18" height="18" rx="5" fill="#CBD5E1"/>
+  <text x="58" y="225" class="base">Dashboard</text>
+  <rect x="28" y="259" width="18" height="18" rx="5" fill="#CBD5E1"/>
+  <text x="58" y="273" class="base">Planner</text>
+  <rect x="16" y="296" width="208" height="40" rx="10" fill="#EEF2FF"/>
+  <rect x="28" y="307" width="18" height="18" rx="5" fill="#4F46E5"/>
+  <text x="58" y="321" class="base semibold" fill="#4F46E5">Settings</text>
+
+  <line x1="16" y1="812" x2="224" y2="812" stroke="#E2E8F0"/>
+  <circle cx="36" cy="844" r="16" fill="#CBD5E1"/>
+  <text x="62" y="840" class="sm semibold">Ishan Jatain</text>
+  <text x="62" y="860" class="tiny muted">Log out</text>
+
+  <!-- Top bar -->
+  <rect x="240" y="0" width="1200" height="64" fill="#FFFFFF" fill-opacity="0.55"/>
+  <line x1="240" y1="64" x2="1440" y2="64" stroke="#E2E8F0"/>
+  <text x="272" y="40" class="h2">Settings</text>
+
+  <!-- Course -->
+  <rect x="272" y="96" width="640" height="300" rx="16" fill="#FFFFFF" fill-opacity="0.62" stroke="#FFFFFF" stroke-opacity="0.9" filter="url(#glassShadow)"/>
+  <text x="296" y="130" class="base semibold">Course</text>
+  <text x="888" y="130" text-anchor="end" class="tiny muted">Used as planner defaults</text>
+
+  <text x="296" y="166" class="sm semibold">Course name</text>
+  <rect x="296" y="178" width="592" height="42" rx="10" fill="#FFFFFF" fill-opacity="0.72" stroke="#CBD5E1"/>
+  <text x="312" y="204" class="base">Artificial Intelligence</text>
+
+  <text x="296" y="248" class="sm semibold">Exam date</text>
+  <rect x="296" y="260" width="286" height="42" rx="10" fill="#FFFFFF" fill-opacity="0.72" stroke="#CBD5E1"/>
+  <text x="312" y="286" class="base">12 Dec 2026</text>
+
+  <text x="602" y="248" class="sm semibold">Free hours per day</text>
+  <rect x="602" y="260" width="286" height="42" rx="10" fill="#FFFFFF" fill-opacity="0.72" stroke="#CBD5E1"/>
+  <text x="618" y="286" class="base">3.0</text>
+
+  <rect x="296" y="330" width="140" height="40" rx="10" fill="#4F46E5"/>
+  <text x="366" y="355" text-anchor="middle" class="sm semibold white">Save changes</text>
+  <text x="452" y="355" class="tiny muted">Saved just now</text>
+
+  <!-- Privacy -->
+  <rect x="272" y="420" width="640" height="220" rx="16" fill="#FFFFFF" fill-opacity="0.62" stroke="#FFFFFF" stroke-opacity="0.9" filter="url(#glassShadow)"/>
+  <text x="296" y="454" class="base semibold">Privacy</text>
+
+  <circle cx="304" cy="484" r="6" fill="#4F46E5"/>
+  <text x="320" y="489" class="sm">Answers are generated only from your uploaded material.</text>
+  <circle cx="304" cy="514" r="6" fill="#4F46E5"/>
+  <text x="320" y="519" class="sm">Documents, progress and chat stay on this device.</text>
+  <circle cx="304" cy="544" r="6" fill="#4F46E5"/>
+  <text x="320" y="549" class="sm">The model runs locally via Ollama. No hosted API is called.</text>
+
+  <text x="296" y="592" class="sm" fill="#4F46E5">Read the privacy policy</text>
+  <text x="296" y="618" class="tiny muted">Every answer cites its source page; unsupported answers say so.</text>
+
+  <!-- Danger -->
+  <rect x="272" y="664" width="640" height="160" rx="16" fill="#FFFFFF" fill-opacity="0.62" stroke="#FCA5A5"/>
+  <text x="296" y="700" class="base semibold" fill="#B91C1C">Danger zone</text>
+  <text x="296" y="728" class="sm">Deletes documents, vectors, topics, quizzes, progress, plans and chat.</text>
+  <text x="296" y="746" class="sm">Your login and course settings are kept.</text>
+  <rect x="296" y="764" width="180" height="40" rx="10" fill="#DC2626"/>
+  <text x="386" y="789" text-anchor="middle" class="sm semibold white">Delete my data</text>
+
+  <!-- Dialog preview -->
+  <text x="960" y="160" class="sm semibold">ConfirmDialog · typing DELETE required</text>
+  <rect x="960" y="180" width="400" height="320" rx="16" fill="#FFFFFF" fill-opacity="0.90" stroke="#FFFFFF" stroke-opacity="0.95" filter="url(#glassShadow)"/>
+  <text x="992" y="224" font-size="18" font-weight="600" fill="#0F172A">Delete all study data?</text>
+  <text x="992" y="252" class="sm muted">This removes every document, quiz, plan and</text>
+  <text x="992" y="270" class="sm muted">chat message. This cannot be undone.</text>
+
+  <text x="992" y="312" class="sm semibold">Type DELETE to confirm</text>
+  <rect x="992" y="324" width="336" height="42" rx="10" fill="#FFFFFF" fill-opacity="0.72" stroke="#CBD5E1"/>
+  <text x="1008" y="350" class="base">DELETE</text>
+
+  <rect x="992" y="392" width="100" height="40" rx="10" fill="#FFFFFF" fill-opacity="0.72" stroke="#CBD5E1"/>
+  <text x="1042" y="417" text-anchor="middle" class="sm">Cancel</text>
+  <rect x="1104" y="392" width="124" height="40" rx="10" fill="#DC2626"/>
+  <text x="1166" y="417" text-anchor="middle" class="sm semibold white">Delete</text>
+
+  <text x="992" y="464" class="tiny muted">Delete stays disabled until the text matches exactly.</text>
+
+  <text x="1404" y="880" text-anchor="end" class="tiny muted">WF-6 · Settings · 1440 x 900</text>
+</svg>

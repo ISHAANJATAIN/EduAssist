@@ -1,0 +1,103 @@
+{
+  "course": "Operating Systems — five-slide course deck (os-sample.pptx). Questions are written against this material; replace the dataset if the group uploads a different deck.",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "What does an operating system do?",
+      "expected_filename": "os-sample.pptx",
+      "expected_page": 1,
+      "expected_terms": ["hardware resources", "system calls", "kernel"]
+    },
+    {
+      "id": "q2",
+      "question": "Why does the kernel run in privileged mode?",
+      "expected_filename": "os-sample.pptx",
+      "expected_page": 1,
+      "expected_terms": ["privileged mode", "memory", "devices"]
+    },
+    {
+      "id": "q3",
+      "question": "What does the process control block store?",
+      "expected_filename": "os-sample.pptx",
+      "expected_page": 2,
+      "expected_terms": ["process control block", "program counter", "registers"]
+    },
+    {
+      "id": "q4",
+      "question": "What overhead does a context switch have?",
+      "expected_filename": "os-sample.pptx",
+      "expected_page": 2,
+      "expected_terms": ["context switch", "saves", "restores"]
+    },
+    {
+      "id": "q5",
+      "question": "What are the states of a process?",
+      "expected_filename": "os-sample.pptx",
+      "expected_page": 2,
+      "expected_terms": ["new", "ready", "running", "waiting", "terminated"]
+    },
+    {
+      "id": "q6",
+      "question": "What is the difference between a process and a thread?",
+      "expected_filename": "os-sample.pptx",
+      "expected_page": 3,
+      "expected_terms": ["thread", "address space", "execution"]
+    },
+    {
+      "id": "q7",
+      "question": "How does round-robin CPU scheduling work?",
+      "expected_filename": "os-sample.pptx",
+      "expected_page": 3,
+      "expected_terms": ["round-robin", "time quantum", "ready process"]
+    },
+    {
+      "id": "q8",
+      "question": "Why can priority scheduling cause starvation?",
+      "expected_filename": "os-sample.pptx",
+      "expected_page": 3,
+      "expected_terms": ["priority scheduling", "starvation", "aging"]
+    },
+    {
+      "id": "q9",
+      "question": "What is virtual memory?",
+      "expected_filename": "os-sample.pptx",
+      "expected_page": 4,
+      "expected_terms": ["virtual memory", "logical address space"]
+    },
+    {
+      "id": "q10",
+      "question": "What happens when a page fault occurs?",
+      "expected_filename": "os-sample.pptx",
+      "expected_page": 4,
+      "expected_terms": ["page fault", "physical memory", "disk"]
+    },
+    {
+      "id": "q11",
+      "question": "What causes thrashing?",
+      "expected_filename": "os-sample.pptx",
+      "expected_page": 4,
+      "expected_terms": ["thrashing", "paging", "executing"]
+    },
+    {
+      "id": "q12",
+      "question": "What are the four Coffman conditions for deadlock?",
+      "expected_filename": "os-sample.pptx",
+      "expected_page": 5,
+      "expected_terms": ["mutual exclusion", "hold and wait", "no preemption", "circular wait"]
+    },
+    {
+      "id": "q13",
+      "question": "How does the banker's algorithm avoid deadlock?",
+      "expected_filename": "os-sample.pptx",
+      "expected_page": 5,
+      "expected_terms": ["banker", "safe states"]
+    },
+    {
+      "id": "q14",
+      "question": "How is deadlock detected and recovered?",
+      "expected_filename": "os-sample.pptx",
+      "expected_page": 5,
+      "expected_terms": ["wait-for graph", "kill", "roll back"]
+    }
+  ]
+}

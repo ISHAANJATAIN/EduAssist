@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="176" height="40" viewBox="0 0 176 40" role="img" aria-label="EduAssist">
+  <title>EduAssist</title>
+  <defs>
+    <linearGradient id="eduassistAccent" gradientUnits="userSpaceOnUse" x1="13.5" y1="20" x2="23" y2="20">
+      <stop offset="0" stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <rect x="0.5" y="0.5" width="39" height="39" rx="11" fill="#FFFFFF" stroke="#0F172A" stroke-opacity="0.10"/>
+  <path d="M13.5 12.5h13M13.5 27.5h13M13.5 12.5v15" fill="none" stroke="#0F172A" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M13.5 20h9.5" fill="none" stroke="url(#eduassistAccent)" stroke-width="2.4" stroke-linecap="round"/>
+  <text x="54" y="27" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="20" font-weight="600" letter-spacing="-0.5" fill="#0F172A">EduAssist</text>
+</svg>

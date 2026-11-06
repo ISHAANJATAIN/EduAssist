@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-labelledby="wfTitle wfDesc">
+  <title id="wfTitle">EduAssist wireframe: planner</title>
+  <desc id="wfDesc">Plan form on the left, feasibility note and day-by-day calendar with study and revision slots on the right.</desc>
+  <style>
+    text { font-family: Inter, 'Segoe UI', system-ui, sans-serif; fill: #334155; }
+    .muted { fill: #475569; }
+    .tiny { font-size: 11px; }
+    .sm { font-size: 12px; }
+    .base { font-size: 14px; }
+    .h2 { font-size: 18px; font-weight: 600; fill: #0F172A; }
+    .semibold { font-weight: 600; }
+    .white { fill: #FFFFFF; }
+  </style>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#EEF2FF"/>
+      <stop offset="0.5" stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#E0F2FE"/>
+    </linearGradient>
+    <filter id="blob" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="90"/>
+    </filter>
+    <filter id="glassShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="20" flood-color="#0F172A" flood-opacity="0.10"/>
+    </filter>
+  </defs>
+  <rect width="1440" height="900" fill="url(#bg)"/>
+  <g filter="url(#blob)" opacity="0.55">
+    <circle cx="1150" cy="110" r="230" fill="#A5B4FC"/>
+    <circle cx="390" cy="800" r="250" fill="#7DD3FC"/>
+    <circle cx="900" cy="470" r="260" fill="#C4B5FD"/>
+  </g>
+
+  <!-- Sidebar -->
+  <rect x="0" y="0" width="240" height="900" fill="#FFFFFF" fill-opacity="0.50"/>
+  <line x1="240" y1="0" x2="240" y2="900" stroke="#E2E8F0"/>
+  <rect x="24" y="22" width="28" height="28" rx="8" fill="#FFFFFF" stroke="#0F172A" stroke-opacity="0.12"/>
+  <path d="M33.4 30.75h9.1M33.4 41.25h9.1M33.4 30.75v10.5" fill="none" stroke="#0F172A" stroke-width="1.7" stroke-linecap="round"/>
+  <path d="M33.4 36h6.7" fill="none" stroke="#4F46E5" stroke-width="1.7" stroke-linecap="round"/>
+  <text x="62" y="42" font-size="16" font-weight="600" fill="#0F172A">EduAssist</text>
+
+  <rect x="28" y="115" width="18" height="18" rx="5" fill="#CBD5E1"/>
+  <text x="58" y="129" class="base">Chat</text>
+  <rect x="28" y="163" width="18" height="18" rx="5" fill="#CBD5E1"/>
+  <text x="58" y="177" class="base">Library</text>
+  <rect x="28" y="211" width="18" height="18" rx="5" fill="#CBD5E1"/>
+  <text x="58" y="225" class="base">Dashboard</text>
+  <rect x="16" y="248" width="208" height="40" rx="10" fill="#EEF2FF"/>
+  <rect x="28" y="259" width="18" height="18" rx="5" fill="#4F46E5"/>
+  <text x="58" y="273" class="base semibold" fill="#4F46E5">Planner</text>
+  <rect x="28" y="307" width="18" height="18" rx="5" fill="#CBD5E1"/>
+  <text x="58" y="321" class="base">Settings</text>
+
+  <line x1="16" y1="812" x2="224" y2="812" stroke="#E2E8F0"/>
+  <circle cx="36" cy="844" r="16" fill="#CBD5E1"/>
+  <text x="62" y="840" class="sm semibold">Ishan Jatain</text>
+  <text x="62" y="860" class="tiny muted">Log out</text>
+
+  <!-- Top bar -->
+  <rect x="240" y="0" width="1200" height="64" fill="#FFFFFF" fill-opacity="0.55"/>
+  <line x1="240" y1="64" x2="1440" y2="64" stroke="#E2E8F0"/>
+  <text x="272" y="40" class="h2">Planner</text>
+  <rect x="1154" y="18" width="78" height="28" rx="14" fill="#DCFCE7"/>
+  <text x="1193" y="37" text-anchor="middle" class="tiny" fill="#15803D">● Feasible</text>
+
+  <!-- Form -->
+  <rect x="272" y="96" width="360" height="620" rx="16" fill="#FFFFFF" fill-opacity="0.62" stroke="#FFFFFF" stroke-opacity="0.9" filter="url(#glassShadow)"/>
+  <text x="296" y="130" class="base semibold">Plan details</text>
+
+  <text x="296" y="166" class="sm semibold">Exam date</text>
+  <rect x="296" y="178" width="304" height="42" rx="10" fill="#FFFFFF" fill-opacity="0.72" stroke="#CBD5E1"/>
+  <text x="312" y="204" class="base">12 Dec 2026</text>
+
+  <text x="296" y="248" class="sm semibold">Free hours per day</text>
+  <rect x="296" y="260" width="304" height="42" rx="10" fill="#FFFFFF" fill-opacity="0.72" stroke="#CBD5E1"/>
+  <text x="312" y="286" class="base">3.0</text>
+  <text x="584" y="286" text-anchor="end" class="tiny muted">hours</text>
+
+  <rect x="296" y="322" width="304" height="36" rx="8" fill="#FFFFFF" fill-opacity="0.55" stroke="#FFFFFF" stroke-opacity="0.8"/>
+  <text x="312" y="345" class="sm">Per-day overrides</text>
+  <path d="M574 337l6 6 6-6" stroke="#64748B" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+
+  <text x="296" y="388" class="sm semibold">Topics to cover</text>
+  <rect x="296" y="400" width="150" height="28" rx="14" fill="#EEF2FF"/>
+  <text x="371" y="419" text-anchor="middle" class="tiny" fill="#4F46E5">Gradient descent</text>
+  <rect x="454" y="400" width="146" height="28" rx="14" fill="#EEF2FF"/>
+  <text x="527" y="419" text-anchor="middle" class="tiny" fill="#4F46E5">Backpropagation</text>
+  <rect x="296" y="436" width="132" height="28" rx="14" fill="#EEF2FF"/>
+  <text x="362" y="455" text-anchor="middle" class="tiny" fill="#4F46E5">Regularization</text>
+  <rect x="436" y="436" width="112" height="28" rx="14" fill="#EEF2FF"/>
+  <text x="492" y="455" text-anchor="middle" class="tiny" fill="#4F46E5">Optimizers</text>
+  <rect x="296" y="472" width="104" height="28" rx="14" fill="#EEF2FF"/>
+  <text x="348" y="491" text-anchor="middle" class="tiny" fill="#4F46E5">CNN basics</text>
+
+  <text x="296" y="530" class="tiny muted">Weak topics get more time. Strong topics get less.</text>
+
+  <rect x="296" y="540" width="304" height="1" fill="#F1F5F9"/>
+  <text x="296" y="574" class="tiny muted">Priority weights</text>
+  <text x="296" y="594" class="tiny muted">weak 3 · untested 2 · developing 2 · strong 1</text>
+
+  <rect x="296" y="640" width="304" height="44" rx="10" fill="#4F46E5"/>
+  <text x="448" y="667" text-anchor="middle" class="sm semibold white">Build plan</text>
+
+  <text x="296" y="706" class="tiny muted">Days run from today to the day before the exam.</text>
+
+  <!-- Notes banner -->
+  <rect x="664" y="96" width="568" height="56" rx="12" fill="#FEF3C7" stroke="#FDE68A"/>
+  <circle cx="688" cy="124" r="10" fill="#B45309"/>
+  <text x="688" y="128" text-anchor="middle" class="tiny white">i</text>
+  <text x="708" y="120" class="sm semibold" fill="#92400E">Plan adjusted to fit your hours</text>
+  <text x="708" y="138" class="tiny" fill="#92400E">Strong topics reduced first. Revision slots stay.</text>
+
+  <!-- Day cards -->
+  <rect x="664" y="168" width="568" height="128" rx="14" fill="#FFFFFF" fill-opacity="0.62" stroke="#FFFFFF" stroke-opacity="0.9" filter="url(#glassShadow)"/>
+  <text x="688" y="196" class="sm semibold">Mon 7 Dec</text>
+  <text x="1208" y="196" text-anchor="end" class="tiny muted">180 min</text>
+  <rect x="688" y="210" width="212" height="30" rx="8" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="700" y="229" class="tiny" fill="#4F46E5">Gradient descent · 60 min</text>
+  <rect x="908" y="210" width="200" height="30" rx="8" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="920" y="229" class="tiny" fill="#4F46E5">Backpropagation · 60 min</text>
+  <rect x="688" y="248" width="196" height="30" rx="8" fill="#FEF3C7"/>
+  <text x="700" y="267" class="tiny" fill="#B45309">Revision · 30 min</text>
+  <rect x="892" y="248" width="180" height="30" rx="8" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="904" y="267" class="tiny" fill="#4F46E5">Optimizers · 30 min</text>
+
+  <rect x="664" y="312" width="568" height="128" rx="14" fill="#FFFFFF" fill-opacity="0.62" stroke="#FFFFFF" stroke-opacity="0.9" filter="url(#glassShadow)"/>
+  <text x="688" y="340" class="sm semibold">Tue 8 Dec</text>
+  <text x="1208" y="340" text-anchor="end" class="tiny muted">180 min</text>
+  <rect x="688" y="354" width="212" height="30" rx="8" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="700" y="373" class="tiny" fill="#4F46E5">Backpropagation · 60 min</text>
+  <rect x="908" y="354" width="200" height="30" rx="8" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="920" y="373" class="tiny" fill="#4F46E5">Regularization · 60 min</text>
+  <rect x="688" y="392" width="196" height="30" rx="8" fill="#FEF3C7"/>
+  <text x="700" y="411" class="tiny" fill="#B45309">Revision · 30 min</text>
+  <rect x="892" y="392" width="180" height="30" rx="8" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="904" y="411" class="tiny" fill="#4F46E5">CNN basics · 30 min</text>
+
+  <rect x="664" y="456" width="568" height="128" rx="14" fill="#FFFFFF" fill-opacity="0.62" stroke="#FFFFFF" stroke-opacity="0.9" filter="url(#glassShadow)"/>
+  <text x="688" y="484" class="sm semibold">Wed 9 Dec</text>
+  <text x="1208" y="484" text-anchor="end" class="tiny muted">120 min</text>
+  <rect x="688" y="498" width="212" height="30" rx="8" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="700" y="517" class="tiny" fill="#4F46E5">Regularization · 60 min</text>
+  <rect x="908" y="498" width="200" height="30" rx="8" fill="#EEF2FF" stroke="#C7D2FE"/>
+  <text x="920" y="517" class="tiny" fill="#4F46E5">Evaluation · 30 min</text>
+  <rect x="688" y="536" width="196" height="30" rx="8" fill="#FEF3C7"/>
+  <text x="700" y="555" class="tiny" fill="#B45309">Revision · 30 min</text>
+
+  <rect x="664" y="600" width="568" height="128" rx="14" fill="#FFFFFF" fill-opacity="0.62" stroke="#FFFFFF" stroke-opacity="0.9" filter="url(#glassShadow)"/>
+  <text x="688" y="628" class="sm semibold">Thu 10 Dec</text>
+  <text x="1208" y="628" text-anchor="end" class="tiny muted">90 min</text>
+  <text x="688" y="650" class="tiny" fill="#B45309">Final revision window · last 3 days before exam</text>
+  <rect x="688" y="664" width="212" height="30" rx="8" fill="#FEF3C7"/>
+  <text x="700" y="683" class="tiny" fill="#B45309">Gradient descent · 45 min</text>
+  <rect x="908" y="664" width="200" height="30" rx="8" fill="#FEF3C7"/>
+  <text x="920" y="683" class="tiny" fill="#B45309">Backpropagation · 45 min</text>
+
+  <text x="664" y="772" class="tiny muted">Exam day 12 Dec has no slots (constraint C6).</text>
+
+  <text x="1404" y="880" text-anchor="end" class="tiny muted">WF-5 · Planner · 1440 x 900</text>
+</svg>
