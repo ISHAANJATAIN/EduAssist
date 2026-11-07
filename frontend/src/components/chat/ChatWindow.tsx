@@ -50,10 +50,10 @@ export function ChatWindow({
       <div className="flex-1 overflow-y-auto px-4 py-6 md:px-6">
         {empty ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-50 text-brand-600">
-              <ChatIcon size={30} />
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-gold-light/40 bg-paper-deep text-gold">
+              <ChatIcon size={28} />
             </div>
-            <h2 className="text-xl font-semibold text-neutral-900">
+            <h2 className="max-w-md text-[26px] font-semibold leading-tight text-ink">
               Ask anything from your uploaded material
             </h2>
             <p className="mt-2 max-w-md text-sm text-neutral-500">

@@ -11,10 +11,13 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<ButtonVariant, string> = {
-  primary: 'bg-brand-600 text-white hover:bg-brand-700',
-  secondary: 'border border-neutral-200 bg-white/72 text-neutral-700 hover:bg-white/90',
-  danger: 'bg-danger text-white hover:bg-danger-text',
-  ghost: 'text-neutral-700 hover:bg-neutral-100',
+  primary:
+    'bg-ink text-paper shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:-translate-y-0.5 hover:bg-ink-soft hover:shadow-[0_14px_28px_-16px_rgba(18,22,31,0.65)] active:translate-y-0',
+  secondary:
+    'border border-ink/15 bg-paper-card text-ink hover:-translate-y-0.5 hover:border-ink/35 hover:shadow-[0_12px_24px_-18px_rgba(18,22,31,0.45)] active:translate-y-0',
+  danger:
+    'bg-danger text-paper hover:-translate-y-0.5 hover:bg-danger-text hover:shadow-[0_14px_28px_-16px_rgba(185,28,28,0.55)] active:translate-y-0',
+  ghost: 'text-neutral-700 hover:bg-ink/5 hover:text-ink',
 }
 
 export function Button({
@@ -29,7 +32,7 @@ export function Button({
     <button
       {...props}
       disabled={disabled || loading}
-      className={`inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${className}`}
+      className={`inline-flex h-10 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition duration-200 disabled:pointer-events-none disabled:opacity-50 ${variants[variant]} ${className}`}
     >
       {loading ? <Spinner size="sm" /> : null}
       {children}

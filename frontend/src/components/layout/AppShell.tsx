@@ -17,14 +17,16 @@ const pageTitles: Record<string, string> = {
 
 function Backdrop() {
   return (
-    <div
-      aria-hidden="true"
-      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-glass-backdrop"
-    >
-      <div className="absolute -left-24 top-[-10%] h-[420px] w-[420px] rounded-full bg-[#A5B4FC] opacity-[0.55] blur-3xl" />
-      <div className="absolute right-[-8%] top-[18%] h-[380px] w-[380px] rounded-full bg-[#7DD3FC] opacity-[0.55] blur-3xl" />
-      <div className="absolute bottom-[-12%] left-[35%] h-[440px] w-[440px] rounded-full bg-[#C4B5FD] opacity-[0.55] blur-3xl" />
-    </div>
+    <>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 -z-10 bg-glass-backdrop"
+      />
+      <div
+        aria-hidden="true"
+        className="landing-grain pointer-events-none fixed inset-0 z-50"
+      />
+    </>
   )
 }
 
@@ -42,12 +44,12 @@ export function AppShell() {
       <Sidebar mobileOpen={menuOpen} onMobileClose={() => setMenuOpen(false)} />
 
       <div className="md:pl-rail lg:pl-sidebar">
-        <header className="flex h-16 items-center justify-between border-b border-neutral-200/80 bg-white/50 px-4 backdrop-blur-glass md:hidden">
+        <header className="flex h-16 items-center justify-between border-b border-ink/10 bg-paper/85 px-4 backdrop-blur md:hidden">
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
             aria-label="Open navigation"
-            className="rounded-md p-1 text-neutral-700 hover:bg-neutral-100"
+            className="rounded-full p-1.5 text-ink transition hover:bg-ink/5"
           >
             <MenuIcon size={22} />
           </button>
@@ -55,10 +57,10 @@ export function AppShell() {
           <span className="w-8" aria-hidden="true" />
         </header>
 
-        <header className="hidden h-16 items-center justify-between border-b border-neutral-200/80 bg-white/50 px-6 backdrop-blur-glass md:flex">
-          <h1 className="text-xl font-semibold text-neutral-900">{title}</h1>
+        <header className="hidden h-16 items-center justify-between border-b border-ink/10 bg-paper/85 px-6 backdrop-blur md:flex">
+          <h1 className="text-[22px] font-semibold text-ink">{title}</h1>
           {examDate ? (
-            <span className="rounded-full bg-brand-50 px-3 py-1 text-sm text-brand-600">
+            <span className="font-label rounded-full border border-gold-light/40 bg-paper-card px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-gold">
               AI · Exam {formatDate(examDate)}
             </span>
           ) : null}

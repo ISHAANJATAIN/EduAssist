@@ -10,7 +10,9 @@ export function Card({ title, children, className = '' }: CardProps) {
   return (
     <section className={`glass p-6 ${className}`}>
       {title ? (
-        <h2 className="mb-4 text-lg font-semibold text-neutral-900">{title}</h2>
+        <h2 className="font-display mb-4 text-[21px] font-semibold leading-tight tracking-[-0.02em] text-ink">
+          {title}
+        </h2>
       ) : null}
       {children}
     </section>

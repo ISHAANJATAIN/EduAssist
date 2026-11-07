@@ -75,7 +75,7 @@ export function SettingsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h2 className="text-2xl font-semibold text-neutral-900">Settings</h2>
+        <h2 className="text-[28px] font-semibold leading-tight text-ink">Settings</h2>
         <p className="mt-1 text-sm text-neutral-600">
           Course defaults, privacy information, and your data controls.
         </p>

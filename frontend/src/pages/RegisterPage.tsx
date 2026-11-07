@@ -21,7 +21,7 @@ export function RegisterPage() {
 
   return (
     <AuthLayout>
-      <h2 className="text-2xl font-semibold text-neutral-900">Create account</h2>
+      <h2 className="text-[28px] font-semibold leading-tight text-ink">Create account</h2>
       <p className="mt-1 text-base text-neutral-600">
         Start with one course. Add material next.
       </p>
@@ -84,7 +84,7 @@ export function RegisterPage() {
         Already have an account?{' '}
         <Link
           to="/login"
-          className="font-semibold text-brand-600 hover:text-brand-700"
+          className="font-semibold text-ink underline decoration-ink/25 underline-offset-4 transition hover:decoration-ink"
         >
           Sign in
         </Link>

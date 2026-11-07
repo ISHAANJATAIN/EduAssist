@@ -48,7 +48,7 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps) {
             key={action.label}
             type="button"
             onClick={() => onSend(action.label, action.intent)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white/72 px-3 py-1.5 text-xs font-semibold text-neutral-700 transition hover:bg-white"
+            className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-paper-card px-3 py-1.5 text-xs font-semibold text-neutral-700 transition duration-200 hover:-translate-y-0.5 hover:border-ink/35 hover:text-ink"
           >
             {action.label}
           </button>
@@ -72,7 +72,7 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps) {
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask about your material…"
-          className="max-h-40 min-h-11 flex-1 resize-none rounded-md border border-neutral-300 bg-white/72 px-3 py-2.5 text-base text-neutral-700 placeholder:text-neutral-500 focus:border-brand-500"
+          className="max-h-40 min-h-11 flex-1 resize-none rounded-[22px] border border-neutral-300 bg-paper-card px-4 py-2.5 text-base text-neutral-900 transition placeholder:text-neutral-500 hover:border-ink/30 focus:border-ink"
         />
         <Button
           type="submit"

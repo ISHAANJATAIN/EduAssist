@@ -8,25 +8,38 @@
   }
 
   body {
-    @apply min-h-screen bg-glass-backdrop bg-fixed font-sans text-base text-neutral-700;
+    @apply min-h-screen bg-paper font-sans text-base text-neutral-700;
   }
 
   :focus-visible {
-    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white/60;
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-paper;
+  }
+
+  ::selection {
+    background-color: #4f46e5;
+    color: #f6f2e9;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+    font-optical-sizing: auto;
+    letter-spacing: -0.02em;
   }
 }
 
 @layer components {
   .glass {
-    @apply rounded-lg border border-white/90 bg-white/62 shadow-glass backdrop-blur-glass backdrop-saturate-150;
+    @apply rounded-lg border border-ink/10 bg-paper-card shadow-glass;
   }
 
   .glass-raised {
-    @apply rounded-md border border-white/90 bg-white/72 backdrop-blur-glass backdrop-saturate-150;
+    @apply rounded-md border border-ink/10 bg-neutral-50;
   }
 
   .glass-strong {
-    @apply rounded-lg border border-white/90 bg-white/90 shadow-popover backdrop-blur-glass backdrop-saturate-150;
+    @apply rounded-lg border border-ink/10 bg-paper-card shadow-popover;
   }
 
   .field-label {
@@ -34,11 +47,16 @@
   }
 
   .field-input {
-    @apply h-11 w-full rounded-md border border-neutral-300 bg-white/72 px-3 text-base text-neutral-700 placeholder:text-neutral-500 focus:border-brand-500;
+    @apply h-11 w-full rounded-md border border-neutral-300 bg-paper-card px-3 text-base text-neutral-900 transition placeholder:text-neutral-500 hover:border-ink/30 focus:border-ink;
   }
 
   .field-hint {
     @apply mt-1.5 text-xs text-neutral-500;
+  }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+    @apply text-[11px] uppercase tracking-[0.22em] text-gold;
   }
 }
 
@@ -93,11 +111,6 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-.landing ::selection {
-  background-color: #4f46e5;
-  color: #f6f2e9;
-}
-
 .landing section[id] {
   scroll-margin-top: 5rem;
 }
@@ -118,16 +131,5 @@
     transform: none;
     transition: none;
     will-change: auto;
-  }
-}
-
-@supports not (backdrop-filter: blur(20px)) {
-  .glass,
-  .glass-raised {
-    background-color: rgba(255, 255, 255, 0.94);
-  }
-
-  .glass-strong {
-    background-color: #ffffff;
   }
 }

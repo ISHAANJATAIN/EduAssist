@@ -13,7 +13,7 @@ import {
 import type { MasteryStatus, TopicPerformance } from '@/api/performance'
 
 const STATUS_COLORS: Record<MasteryStatus, string> = {
-  untested: '#94A3B8',
+  untested: '#A39B8B',
   weak: '#DC2626',
   developing: '#D97706',
   strong: '#16A34A',
@@ -63,14 +63,14 @@ export function MasteryChart({ topics }: { topics: TopicPerformance[] }) {
           >
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="#E2E8F0"
+              stroke="#E4DDCD"
               horizontal={false}
             />
             <XAxis
               type="number"
               domain={[0, 100]}
               ticks={[0, 25, 50, 75, 100]}
-              tick={{ fontSize: 12, fill: '#64748B' }}
+              tick={{ fontSize: 12, fill: '#656A75' }}
               tickLine={false}
               axisLine={false}
             />
@@ -78,7 +78,7 @@ export function MasteryChart({ topics }: { topics: TopicPerformance[] }) {
               type="category"
               dataKey="name"
               width={132}
-              tick={{ fontSize: 12, fill: '#64748B' }}
+              tick={{ fontSize: 12, fill: '#656A75' }}
               tickLine={false}
               axisLine={false}
             />
@@ -88,7 +88,7 @@ export function MasteryChart({ topics }: { topics: TopicPerformance[] }) {
                 dataKey="mastery"
                 position="right"
                 formatter={(value: number) => `${value}%`}
-                fill="#64748B"
+                fill="#656A75"
                 fontSize={12}
               />
               {data.map((entry) => (

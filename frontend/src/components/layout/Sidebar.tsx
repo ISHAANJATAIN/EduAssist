@@ -44,12 +44,12 @@ function NavList({
           aria-label={label}
           title={rail ? label : undefined}
           className={({ isActive }) =>
-            `flex items-center gap-3 rounded-md py-2.5 text-base transition ${
-              rail ? 'justify-center px-0 lg:justify-start lg:px-3' : 'px-3'
+            `flex items-center gap-3 rounded-full py-2.5 text-[15px] transition duration-200 ${
+              rail ? 'justify-center px-0 lg:justify-start lg:px-4' : 'px-4'
             } ${
               isActive
-                ? 'bg-brand-50 font-semibold text-brand-600'
-                : 'text-neutral-700 hover:bg-neutral-100/70'
+                ? 'bg-ink font-semibold text-paper shadow-[0_10px_22px_-14px_rgba(18,22,31,0.7)]'
+                : 'text-neutral-700 hover:bg-ink/5 hover:text-ink'
             }`
           }
         >
@@ -83,7 +83,7 @@ function AccountFooter({ rail = false }: { rail?: boolean }) {
 
   return (
     <div
-      className={`border-t border-neutral-200/80 pt-4 ${
+      className={`border-t border-ink/10 pt-4 ${
         rail ? 'px-0 lg:px-1' : 'px-1'
       }`}
     >
@@ -94,7 +94,7 @@ function AccountFooter({ rail = false }: { rail?: boolean }) {
       >
         <span
           title={user?.name ?? 'Account'}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-xs font-semibold text-neutral-700"
+          className="font-label flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold-light/50 bg-paper-deep text-[11px] font-medium text-gold"
         >
           {initials}
         </span>
@@ -103,13 +103,13 @@ function AccountFooter({ rail = false }: { rail?: boolean }) {
             rail ? 'hidden min-w-0 flex-1 lg:block' : 'min-w-0 flex-1'
           }
         >
-          <p className="truncate text-sm font-semibold text-neutral-700">
+          <p className="truncate text-sm font-semibold text-ink">
             {user?.name ?? 'Account'}
           </p>
           <button
             type="button"
             onClick={handleLogout}
-            className="text-xs text-neutral-600 hover:text-neutral-900"
+            className="text-xs text-neutral-600 underline decoration-ink/20 underline-offset-2 transition hover:text-ink hover:decoration-ink"
           >
             Log out
           </button>
@@ -119,7 +119,7 @@ function AccountFooter({ rail = false }: { rail?: boolean }) {
         <button
           type="button"
           onClick={handleLogout}
-          className="mt-3 w-full text-center text-xs text-neutral-600 hover:text-neutral-900 lg:hidden"
+          className="mt-3 w-full text-center text-xs text-neutral-600 hover:text-ink lg:hidden"
         >
           Out
         </button>
@@ -136,8 +136,8 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   return (
     <>
-      <aside className="fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-neutral-200/80 bg-white/50 backdrop-blur-glass backdrop-saturate-150 md:flex md:w-rail lg:w-sidebar">
-        <div className="flex h-16 items-center border-b border-neutral-200/60 px-4 lg:px-6">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-ink/10 bg-paper-deep/70 md:flex md:w-rail lg:w-sidebar">
+        <div className="flex h-16 items-center border-b border-ink/10 px-4 lg:px-6">
           <div className="lg:hidden">
             <Logo size={28} showWordmark={false} />
           </div>
@@ -161,13 +161,13 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
             type="button"
             aria-label="Close navigation"
             onClick={onMobileClose}
-            className="absolute inset-0 bg-neutral-900/30 backdrop-blur-sm"
+            className="absolute inset-0 bg-ink/30 backdrop-blur-sm"
           />
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Navigation"
-            className="relative flex h-full w-[280px] flex-col border-r border-white/90 bg-white/90 p-4 shadow-popover backdrop-blur-glass"
+            className="relative flex h-full w-[280px] flex-col border-r border-ink/10 bg-paper p-4 shadow-popover"
           >
             <div className="flex h-12 items-center justify-between px-2">
               <Logo size={28} />
@@ -175,7 +175,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 type="button"
                 onClick={onMobileClose}
                 aria-label="Close navigation"
-                className="rounded-md p-1 text-neutral-600 hover:bg-neutral-100"
+                className="rounded-full p-1.5 text-neutral-600 transition hover:bg-ink/5 hover:text-ink"
               >
                 <CloseIcon size={20} />
               </button>

@@ -19,7 +19,7 @@ export function PlannerPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h2 className="text-2xl font-semibold text-neutral-900">Planner</h2>
+        <h2 className="text-[28px] font-semibold leading-tight text-ink">Planner</h2>
         <p className="mt-1 text-sm text-neutral-600">
           Build a day-by-day study plan around your exam date.
         </p>

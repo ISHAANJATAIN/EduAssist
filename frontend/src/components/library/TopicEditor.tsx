@@ -265,7 +265,7 @@ export function TopicEditor() {
                   <button
                     type="button"
                     onClick={() => openEdit(topic)}
-                    className="rounded-md px-2 py-1 text-xs font-semibold text-brand-600 transition hover:bg-brand-50"
+                    className="rounded-full px-2.5 py-1 text-xs font-semibold text-ink underline decoration-ink/25 underline-offset-2 transition hover:bg-ink/5 hover:decoration-ink"
                   >
                     Edit
                   </button>

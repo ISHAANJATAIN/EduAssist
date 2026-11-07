@@ -20,7 +20,7 @@ export function LoginPage() {
 
   return (
     <AuthLayout>
-      <h2 className="text-2xl font-semibold text-neutral-900">Sign in</h2>
+      <h2 className="text-[28px] font-semibold leading-tight text-ink">Sign in</h2>
       <p className="mt-1 text-base text-neutral-600">Welcome back to your course.</p>
 
       <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
@@ -65,7 +65,7 @@ export function LoginPage() {
         New here?{' '}
         <Link
           to="/register"
-          className="font-semibold text-brand-600 hover:text-brand-700"
+          className="font-semibold text-ink underline decoration-ink/25 underline-offset-4 transition hover:decoration-ink"
         >
           Create an account
         </Link>

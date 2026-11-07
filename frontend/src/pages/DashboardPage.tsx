@@ -38,7 +38,7 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h2 className="text-2xl font-semibold text-neutral-900">Dashboard</h2>
+        <h2 className="text-[28px] font-semibold leading-tight text-ink">Dashboard</h2>
         <p className="mt-1 text-sm text-neutral-600">
           Mastery across your topics. It updates after every quiz attempt.
         </p>

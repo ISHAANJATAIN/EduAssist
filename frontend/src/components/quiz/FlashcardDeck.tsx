@@ -83,9 +83,9 @@ export function FlashcardDeck({ quiz, onSubmitted }: FlashcardDeckProps) {
         type="button"
         onClick={() => setFlipped((value) => !value)}
         aria-label={flipped ? 'Show card front' : 'Show card back'}
-        className="min-h-44 w-full rounded-lg border border-brand-100 bg-gradient-to-br from-brand-50 to-white px-4 py-6 text-center transition hover:border-brand-500"
+        className="min-h-44 w-full rounded-lg border border-ink/10 bg-gradient-to-br from-paper-deep to-paper-card px-4 py-6 text-center transition duration-200 hover:-translate-y-0.5 hover:border-ink/30 hover:shadow-lift"
       >
-        <span className="text-xs font-semibold uppercase tracking-wide text-brand-700">
+        <span className="font-label text-[11px] uppercase tracking-[0.22em] text-gold">
           {flipped ? 'Back' : 'Front'}
         </span>
         <span className="mt-2 block whitespace-pre-wrap break-words text-base text-neutral-900">
