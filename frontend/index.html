@@ -6,17 +6,18 @@
     <meta name="color-scheme" content="light dark" />
     <script>
       ;(() => {
+        let stored = null
         try {
-          const stored = localStorage.getItem('eduassist.theme')
-          const dark =
-            stored === 'dark' ||
-            (stored !== 'light' &&
-              window.matchMedia('(prefers-color-scheme: dark)').matches)
-          document.documentElement.classList.toggle('dark', dark)
-          document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+          stored = localStorage.getItem('eduassist.theme')
         } catch {
-          /* A blocked localStorage should not stop the page from loading. */
+          /* Storage may be blocked; fall back to the system preference. */
         }
+        const dark =
+          stored === 'dark' ||
+          (stored !== 'light' &&
+            window.matchMedia?.('(prefers-color-scheme: dark)').matches)
+        document.documentElement.classList.toggle('dark', Boolean(dark))
+        document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
       })()
     </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

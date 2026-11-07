@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import uuid
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError
+from app.models.course import Course
 from app.models.quiz import Quiz, QuizAttempt
+from app.models.topic import Topic
 from app.models.user import User
 from app.schemas.quiz import AttemptIn, AttemptOut, AttemptResultOut
 
@@ -79,6 +82,21 @@ def score_attempt(
     if not items:
         raise AppError("validation_error", "This quiz has no items.", 422)
 
+    try:
+        topic_ids = {_uuid(value) for value in quiz.topic_ids or []}
+        topic_ids.update(_uuid(item["topic_id"]) for item in items)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise AppError("validation_error", "This quiz is outdated. Create a new quiz.", 422) from exc
+    owned_ids = set(
+        db.scalars(
+            select(Topic.id)
+            .join(Course, Topic.course_id == Course.id)
+            .where(Course.user_id == user.id, Topic.id.in_(topic_ids))
+        )
+    )
+    if owned_ids != topic_ids:
+        raise AppError("validation_error", "This quiz is outdated. Create a new quiz.", 422)
+
     results: list[AttemptResultOut] = []
 
     if quiz.kind == "quiz":
@@ -117,8 +135,7 @@ def score_attempt(
         results=[result.model_dump(mode="json") for result in results],
     )
     db.add(attempt)
-    db.commit()
-    db.refresh(attempt)
+    db.flush()
 
     return AttemptOut(
         attempt_id=attempt.id,

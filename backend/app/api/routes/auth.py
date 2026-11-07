@@ -4,7 +4,12 @@ from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import CurrentUser, DbSession
 from app.core.errors import AppError
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import (
+    create_access_token,
+    hash_password,
+    legacy_bcrypt_needs_update,
+    verify_password,
+)
 from app.models.course import Course
 from app.models.user import User
 from app.schemas.auth import LoginIn, RegisterIn, TokenOut, UserOut
@@ -43,9 +48,14 @@ def register(payload: RegisterIn, db: DbSession) -> TokenOut:
 
 @router.post("/login", response_model=TokenOut)
 def login(payload: LoginIn, db: DbSession) -> TokenOut:
-    user = db.scalar(select(User).where(User.email == payload.email.lower()))
+    user = db.scalar(
+        select(User).where(User.email == payload.email.lower()).with_for_update()
+    )
     if user is None or not verify_password(payload.password, user.password_hash):
         raise AppError("invalid_credentials", "Incorrect email or password", 401)
+    if legacy_bcrypt_needs_update(user.password_hash):
+        user.password_hash = hash_password(payload.password)
+        db.commit()
     return _token_for(user)
 
 

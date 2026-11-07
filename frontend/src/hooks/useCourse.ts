@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { getCourse, updateCourse, type CourseUpdate } from '@/api/course'
 
+import { captureSessionGeneration, isCurrentSession } from '@/store/authStore'
+
 export const courseKey = ['course'] as const
 
 export function useCourse() {
@@ -13,6 +15,9 @@ export function useUpdateCourse() {
 
   return useMutation({
     mutationFn: (payload: CourseUpdate) => updateCourse(payload),
-    onSuccess: (course) => queryClient.setQueryData(courseKey, course),
+    onMutate: captureSessionGeneration,
+    onSuccess: (course, _variables, generation) => {
+      if (isCurrentSession(generation)) queryClient.setQueryData(courseKey, course)
+    },
   })
 }

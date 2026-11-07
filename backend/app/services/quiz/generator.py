@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.core.errors import AppError
 from app.models.course import Course
 from app.models.quiz import Quiz
@@ -100,12 +101,17 @@ def _topic_query(topic: Topic) -> str:
 def _collect(user_id: uuid.UUID, topics: list[Topic]) -> tuple[list[Topic], list[_Excerpt]]:
     active: list[Topic] = []
     excerpts: list[_Excerpt] = []
+    minimum_score = get_settings().retrieval_min_score
 
     for topic in topics:
         remaining = MAX_EXCERPTS - len(excerpts)
         if remaining <= 0:
             break
-        matches = query(user_id, _topic_query(topic), k=min(CHUNKS_PER_TOPIC, remaining))
+        matches = [
+            match
+            for match in query(user_id, _topic_query(topic), k=min(CHUNKS_PER_TOPIC, remaining))
+            if match.score >= minimum_score
+        ]
         if not matches:
             continue
         active.append(topic)
@@ -336,6 +342,9 @@ def _select_topics(
 
 
 def create_quiz(user: User, payload: QuizCreateIn, db: Session) -> QuizOut:
+    user_id = user.id
+    db.scalar(select(User).where(User.id == user_id).with_for_update())
+    db.expire_all()
     topics = _select_topics(user, payload, db)
     if not topics:
         raise AppError("no_material", NO_MATERIAL, 409)
@@ -354,8 +363,7 @@ def create_quiz(user: User, payload: QuizCreateIn, db: Session) -> QuizOut:
         items=items,
     )
     db.add(quiz)
-    db.commit()
-    db.refresh(quiz)
+    db.flush()
     return quiz_to_out(quiz)
 
 

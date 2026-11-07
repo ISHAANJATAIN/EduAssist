@@ -142,7 +142,7 @@ function HeroPanel() {
             <span className="h-2 w-2 rounded-full bg-ink/15" />
             <span className="h-2 w-2 rounded-full bg-ink/15" />
           </div>
-          <p className="font-label ml-3 truncate text-[10px] uppercase tracking-[0.16em] text-ink/40">
+          <p className="font-label ml-3 truncate text-[10px] uppercase tracking-[0.16em] text-neutral-600">
             Operating Systems · Week 4
           </p>
         </div>
@@ -171,7 +171,7 @@ function HeroPanel() {
         </div>
 
         <div className="mt-5 flex items-center justify-between border-t border-ink/10 pt-4">
-          <p className="font-label text-[10px] uppercase tracking-[0.14em] text-ink/40">
+          <p className="font-label text-[10px] uppercase tracking-[0.14em] text-neutral-600">
             2 sources read · 1.4s
           </p>
           <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-ink/60">
@@ -181,7 +181,7 @@ function HeroPanel() {
       </div>
 
       <div className="absolute -bottom-14 -left-4 hidden w-[196px] rotate-[2.5deg] rounded-xl border border-[#FFFDF7]/10 bg-panel p-4 text-on-panel shadow-[0_24px_50px_-24px_rgb(var(--shadow-rgb)/0.6)] sm:block">
-        <p className="font-label text-[9px] uppercase tracking-[0.2em] text-on-panel/40">
+        <p className="font-label text-[9px] uppercase tracking-[0.2em] text-on-panel/60">
           Mastery
         </p>
         <p className="font-display mt-1 text-[19px] leading-tight">Virtual memory</p>
@@ -194,7 +194,7 @@ function HeroPanel() {
       </div>
 
       <div className="absolute -top-12 -right-3 hidden rotate-[2deg] rounded-xl border border-ink/10 bg-paper-card px-4 py-3 shadow-[0_18px_36px_-20px_rgb(var(--shadow-rgb)/0.5)] sm:block">
-        <p className="font-label text-[9px] uppercase tracking-[0.18em] text-ink/40">
+        <p className="font-label text-[9px] uppercase tracking-[0.18em] text-neutral-600">
           Next up
         </p>
         <p className="mt-0.5 text-[13px] font-semibold text-ink">
@@ -342,7 +342,7 @@ export function LandingPage() {
               </a>
             </div>
 
-            <p className="mt-9 font-label text-[10px] uppercase tracking-[0.18em] text-ink/40">
+            <p className="mt-9 font-label text-[10px] uppercase tracking-[0.18em] text-neutral-600">
               Local-first · Free · One course at a time
             </p>
           </div>
@@ -358,7 +358,7 @@ export function LandingPage() {
                 <>
                   Generic AI knows everything.
                   <br />
-                  <span className="text-ink/40">
+                  <span className="text-neutral-600">
                     Your course is the one thing it does not.
                   </span>
                 </>
@@ -517,7 +517,7 @@ export function LandingPage() {
         <div className={`${shell} flex flex-col gap-6 py-10 sm:flex-row sm:items-center sm:justify-between`}>
           <div className="flex items-center gap-3">
             <Logo size={22} />
-            <span className="font-label text-[10px] uppercase tracking-[0.16em] text-ink/40">
+            <span className="font-label text-[10px] uppercase tracking-[0.16em] text-neutral-600">
               BMU CSE · Group 10 · 2026
             </span>
           </div>

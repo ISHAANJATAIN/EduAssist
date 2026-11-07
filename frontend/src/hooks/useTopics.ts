@@ -9,6 +9,8 @@ import {
   type TopicIn,
 } from '@/api/topics'
 
+import { captureSessionGeneration, isCurrentSession } from '@/store/authStore'
+
 export const topicsKey = ['topics'] as const
 
 export function useTopics() {
@@ -20,7 +22,10 @@ export function useCreateTopic() {
 
   return useMutation({
     mutationFn: (payload: TopicIn) => createTopic(payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: topicsKey }),
+    onMutate: captureSessionGeneration,
+    onSuccess: (_data, _variables, generation) => {
+      if (isCurrentSession(generation)) return queryClient.invalidateQueries({ queryKey: topicsKey })
+    },
   })
 }
 
@@ -30,7 +35,10 @@ export function useUpdateTopic() {
   return useMutation({
     mutationFn: ({ topicId, payload }: { topicId: string; payload: TopicIn }) =>
       updateTopic(topicId, payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: topicsKey }),
+    onMutate: captureSessionGeneration,
+    onSuccess: (_data, _variables, generation) => {
+      if (isCurrentSession(generation)) return queryClient.invalidateQueries({ queryKey: topicsKey })
+    },
   })
 }
 
@@ -39,7 +47,10 @@ export function useDeleteTopic() {
 
   return useMutation({
     mutationFn: (topicId: string) => deleteTopic(topicId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: topicsKey }),
+    onMutate: captureSessionGeneration,
+    onSuccess: (_data, _variables, generation) => {
+      if (isCurrentSession(generation)) return queryClient.invalidateQueries({ queryKey: topicsKey })
+    },
   })
 }
 
@@ -48,6 +59,9 @@ export function useExtractTopics() {
 
   return useMutation({
     mutationFn: extractTopics,
-    onSuccess: (topics) => queryClient.setQueryData(topicsKey, topics),
+    onMutate: captureSessionGeneration,
+    onSuccess: (topics, _variables, generation) => {
+      if (isCurrentSession(generation)) queryClient.setQueryData(topicsKey, topics)
+    },
   })
 }

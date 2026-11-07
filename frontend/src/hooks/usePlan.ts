@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { createPlan, getLatestPlan, type PlanIn } from '@/api/planner'
 
+import { captureSessionGeneration, isCurrentSession } from '@/store/authStore'
+
 export const planKey = ['plan', 'latest'] as const
 
 export function useLatestPlan() {
@@ -17,7 +19,9 @@ export function useCreatePlan() {
 
   return useMutation({
     mutationFn: (payload: PlanIn) => createPlan(payload),
-    onSuccess: (plan) => {
+    onMutate: captureSessionGeneration,
+    onSuccess: (plan, _variables, generation) => {
+      if (!isCurrentSession(generation)) return
       queryClient.setQueryData(planKey, plan)
     },
   })

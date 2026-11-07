@@ -16,6 +16,7 @@ from app.api.routes import (
 )
 from app.core.config import get_settings
 from app.core.errors import register_error_handlers
+from app.core.http_safety import HttpSafetyMiddleware
 from app.db.init_db import init_db
 
 settings = get_settings()
@@ -34,6 +35,11 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+app.add_middleware(
+    HttpSafetyMiddleware,
+    upload_path=f"{settings.api_prefix}/documents",
+    max_bytes=(settings.max_upload_mb + 1) * 1024 * 1024,
 )
 register_error_handlers(app)
 

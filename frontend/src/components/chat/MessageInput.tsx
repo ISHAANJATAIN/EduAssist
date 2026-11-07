@@ -47,8 +47,9 @@ export function MessageInput({ onSend, disabled = false }: MessageInputProps) {
           <button
             key={action.label}
             type="button"
+            disabled={disabled}
             onClick={() => onSend(action.label, action.intent)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-paper-card px-3 py-1.5 text-xs font-semibold text-neutral-700 transition duration-200 hover:-translate-y-0.5 hover:border-ink/35 hover:text-ink"
+            className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-paper-card px-3 py-1.5 text-xs font-semibold text-neutral-700 transition duration-200 hover:-translate-y-0.5 hover:border-ink/35 hover:text-ink disabled:pointer-events-none disabled:opacity-50"
           >
             {action.label}
           </button>

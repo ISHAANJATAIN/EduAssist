@@ -419,10 +419,7 @@ export interface components {
         };
         /** Body_upload_document_api_documents_post */
         Body_upload_document_api_documents_post: {
-            /**
-             * File
-             * Format: binary
-             */
+            /** File */
             file: string;
             /**
              * Doc Type
@@ -884,6 +881,10 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
         };
     };
     responses: never;

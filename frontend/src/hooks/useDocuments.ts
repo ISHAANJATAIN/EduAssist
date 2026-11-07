@@ -7,6 +7,8 @@ import {
   type DocType,
 } from '@/api/documents'
 
+import { captureSessionGeneration, isCurrentSession } from '@/store/authStore'
+
 export const documentsKey = ['documents'] as const
 
 export function useDocuments() {
@@ -26,7 +28,10 @@ export function useUploadDocument() {
   return useMutation({
     mutationFn: ({ file, docType }: { file: File; docType: DocType }) =>
       uploadDocument(file, docType),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: documentsKey }),
+    onMutate: captureSessionGeneration,
+    onSuccess: (_data, _variables, generation) => {
+      if (isCurrentSession(generation)) return queryClient.invalidateQueries({ queryKey: documentsKey })
+    },
   })
 }
 
@@ -35,6 +40,9 @@ export function useDeleteDocument() {
 
   return useMutation({
     mutationFn: (documentId: string) => deleteDocument(documentId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: documentsKey }),
+    onMutate: captureSessionGeneration,
+    onSuccess: (_data, _variables, generation) => {
+      if (isCurrentSession(generation)) return queryClient.invalidateQueries({ queryKey: documentsKey })
+    },
   })
 }

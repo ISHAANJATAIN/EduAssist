@@ -65,7 +65,7 @@ def apply_attempt(
 
         updates.append(MasteryUpdateOut(topic_id=topic_id, old=old, new=new))
 
-    db.commit()
+    db.flush()
     return updates
 
 

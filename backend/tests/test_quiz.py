@@ -2,9 +2,13 @@ from __future__ import annotations
 
 import json
 import uuid
+from dataclasses import replace
 from types import SimpleNamespace
 
+import pytest
 from fastapi.testclient import TestClient
+
+from app.core.config import get_settings
 
 from app.services.ingestion.vector_store import ChunkMatch
 from app.services.quiz import generator
@@ -518,6 +522,64 @@ def test_quiz_is_private_to_its_owner(client: TestClient, monkeypatch) -> None:
     assert read.status_code == 404
     assert submit.status_code == 404
     assert read.json()["code"] == "not_found"
+
+
+@pytest.mark.parametrize("kind", ["quiz", "flashcards"])
+@pytest.mark.parametrize(
+    ("minimum", "score", "expected"),
+    [(0.30, 0.01, 409), (0.30, 0.299, 409), (0.30, 0.30, 201),
+     (0.30, 0.301, 201), (0.60, 0.599, 409), (0.60, 0.60, 201)],
+)
+def test_quiz_generation_requires_retrieval_score_threshold(
+    client, monkeypatch, kind, minimum, score, expected
+):
+    headers = _auth(client)
+    _topic(client, headers)
+    monkeypatch.setattr(get_settings(), "retrieval_min_score", minimum)
+    _patch_chunks(monkeypatch, [replace(_chunk(), score=score)])
+    draft = _question("What does deadlock require?", 0) if kind == "quiz" else {
+        "topic_index": 1, "excerpt": 1, "front": "What is deadlock?", "back": "Circular waiting.",
+    }
+    model = _patch_llm(monkeypatch, [_quiz_reply([draft])])
+
+    response = client.post("/api/quizzes", headers=headers, json={"kind": kind, "num_items": 1})
+
+    assert response.status_code == expected
+    if expected == 409:
+        assert response.json()["code"] == "no_material"
+        assert model.calls == 0
+    else:
+        assert len(response.json()["items"]) == 1
+
+
+def test_low_score_excerpts_are_not_available_as_quiz_sources(client, monkeypatch):
+    headers = _auth(client)
+    _topic(client, headers)
+    monkeypatch.setattr(get_settings(), "retrieval_min_score", 0.30)
+    _patch_chunks(monkeypatch, [replace(_chunk(), score=0.01, filename="irrelevant.pdf"), _chunk()])
+    _patch_llm(monkeypatch, [_quiz_reply([_question("What does deadlock require?", 0)])])
+
+    response = client.post("/api/quizzes", headers=headers, json={"kind": "quiz", "num_items": 1})
+
+    assert response.status_code == 201
+    assert response.json()["items"][0]["source"]["filename"] == "os-sample.pptx"
+
+
+def test_topics_without_relevant_chunks_are_not_activated(client, monkeypatch):
+    headers = _auth(client)
+    _topic(client, headers, "Deadlock")
+    paging = _topic(client, headers, "Paging")
+    monkeypatch.setattr(get_settings(), "retrieval_min_score", 0.30)
+    monkeypatch.setattr(generator, "query", lambda user_id, text, k: [
+        replace(_chunk(), score=0.01 if text.startswith("Deadlock") else 0.82)
+    ])
+    _patch_llm(monkeypatch, [_quiz_reply([_question("What is paging?", 0)])])
+
+    response = client.post("/api/quizzes", headers=headers, json={"kind": "quiz", "num_items": 1})
+
+    assert response.status_code == 201
+    assert response.json()["topic_ids"] == [paging]
+    assert response.json()["items"][0]["topic_id"] == paging
 
 
 def test_quizzes_require_authentication(client: TestClient) -> None:

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.errors import AppError
 from app.models.chat import ChatMessage
 from app.models.course import Course
 from app.models.topic import Topic
@@ -74,14 +76,21 @@ def _planner_reply(
     if exam_date is None:
         return CLARIFY, ClarifyReply(text=CLARIFY_EXAM_DATE, missing=["exam_date"])
 
-    payload = PlanIn(
-        exam_date=exam_date,
-        free_hours_per_day=slots.free_hours_per_day,
-    )
+    try:
+        payload = PlanIn(
+            exam_date=exam_date,
+            free_hours_per_day=slots.free_hours_per_day,
+            topic_ids=list(slots.topic_ids) or None,
+        )
+    except ValidationError as exc:
+        raise AppError("validation_error", exc.errors()[0]["msg"], 422) from exc
     return "planner", PlanReply(plan=create_plan(db, user, payload))
 
 
 def dispatch(user: User, payload: ChatIn, db: Session) -> ChatOut:
+    user_id = user.id
+    db.scalar(select(User).where(User.id == user_id).with_for_update())
+    db.expire_all()
     requested = payload.intent or detect_intent(payload.message)
     course = _course(db, user)
     topics = _topics(db, course)

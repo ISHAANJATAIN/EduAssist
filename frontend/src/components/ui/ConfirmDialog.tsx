@@ -27,14 +27,19 @@ export function ConfirmDialog({
   const inputId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
   const cancelRef = useRef(onCancel)
+  const loadingRef = useRef(loading)
   const [typed, setTyped] = useState('')
 
   cancelRef.current = onCancel
+  loadingRef.current = loading
 
   useEffect(() => {
     if (!open) return
     setTyped('')
 
+    const opener = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null
     const panel = panelRef.current
     const focusables = () =>
       Array.from(
@@ -43,17 +48,22 @@ export function ConfirmDialog({
         ) ?? [],
       )
 
-    focusables()[0]?.focus()
+    const initialFocus = focusables()[0] ?? panel
+    initialFocus?.focus()
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault()
-        cancelRef.current()
+        if (!loadingRef.current) cancelRef.current()
         return
       }
       if (event.key !== 'Tab') return
       const items = focusables()
-      if (items.length === 0) return
+      if (items.length === 0) {
+        event.preventDefault()
+        panel?.focus()
+        return
+      }
       const first = items[0]
       const last = items[items.length - 1]
       if (event.shiftKey && document.activeElement === first) {
@@ -66,7 +76,10 @@ export function ConfirmDialog({
     }
 
     document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      if (opener?.isConnected) opener.focus()
+    }
   }, [open])
 
   if (!open) return null
@@ -78,6 +91,7 @@ export function ConfirmDialog({
       <div
         ref={panelRef}
         role="dialog"
+        tabIndex={-1}
         aria-modal="true"
         aria-labelledby={titleId}
         className="glass-strong w-full max-w-md p-6"
@@ -105,7 +119,11 @@ export function ConfirmDialog({
         ) : null}
 
         <div className="mt-6 flex justify-end gap-3">
-          <Button variant="secondary" onClick={() => cancelRef.current()}>
+          <Button
+            variant="secondary"
+            disabled={loading}
+            onClick={() => cancelRef.current()}
+          >
             Cancel
           </Button>
           <Button

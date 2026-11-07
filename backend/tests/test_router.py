@@ -207,6 +207,44 @@ def test_chat_planner_uses_course_settings(client: TestClient) -> None:
     assert body["reply"]["plan"]["feasible"] is True
 
 
+@pytest.mark.parametrize("date_in_message", [True, False])
+def test_chat_planner_returns_validation_error_for_excessive_horizon(client, date_in_message):
+    headers = _auth(client, "router-horizon@bmu.edu.in")
+    exam = date.today() + timedelta(days=366)
+    _set_course(client, headers, exam)
+    _topic(client, headers, "Processes")
+
+    response = client.post(
+        "/api/chat", headers=headers,
+        json={"message": f"Plan my revision for {exam.isoformat()}" if date_in_message else "Plan my revision"},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["code"] == "validation_error"
+    assert client.get("/api/chat/history", headers=headers).json() == []
+
+
+@pytest.mark.parametrize("selected_only", [True, False])
+def test_chat_planner_preserves_topic_selection(client: TestClient, selected_only) -> None:
+    headers = _auth(client, "router-selection@bmu.edu.in")
+    _set_course(client, headers, date.today() + timedelta(days=5))
+    deadlocks = _topic(client, headers, "Deadlocks")
+    paging = _topic(client, headers, "Paging")
+
+    response = client.post(
+        "/api/chat", headers=headers,
+        json={"message": "Plan my revision for Deadlocks" if selected_only else "Plan my revision"},
+    )
+
+    assert response.status_code == 200
+    scheduled = {
+        slot["topic_id"]
+        for day in response.json()["reply"]["plan"]["days"]
+        for slot in day["slots"]
+    }
+    assert scheduled == ({deadlocks["id"]} if selected_only else {deadlocks["id"], paging["id"]})
+
+
 def test_chat_planner_reads_the_date_and_hours_from_the_message(
     client: TestClient,
 ) -> None:

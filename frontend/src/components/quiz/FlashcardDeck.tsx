@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 
 import type { AttemptOut, Flashcard, QuizOut } from '@/api/quizzes'
 import { QuizResult } from '@/components/quiz/QuizResult'
@@ -12,6 +12,7 @@ interface FlashcardDeckProps {
 }
 
 export function FlashcardDeck({ quiz, onSubmitted }: FlashcardDeckProps) {
+  const contentId = useId()
   const cards = quiz.items.filter(
     (item): item is Flashcard => 'front' in item,
   )
@@ -83,12 +84,16 @@ export function FlashcardDeck({ quiz, onSubmitted }: FlashcardDeckProps) {
         type="button"
         onClick={() => setFlipped((value) => !value)}
         aria-label={flipped ? 'Show card front' : 'Show card back'}
+        aria-describedby={contentId}
         className="min-h-44 w-full rounded-lg border border-ink/10 bg-gradient-to-br from-paper-deep to-paper-card px-4 py-6 text-center transition duration-200 hover:-translate-y-0.5 hover:border-ink/30 hover:shadow-lift"
       >
         <span className="font-label text-[11px] uppercase tracking-[0.22em] text-gold">
           {flipped ? 'Back' : 'Front'}
         </span>
-        <span className="mt-2 block whitespace-pre-wrap break-words text-base text-neutral-900">
+        <span
+          id={contentId}
+          className="mt-2 block whitespace-pre-wrap break-words text-base text-neutral-900"
+        >
           {flipped ? current.back : current.front}
         </span>
         <span className="mt-4 block text-xs text-neutral-500">

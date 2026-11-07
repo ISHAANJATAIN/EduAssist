@@ -41,6 +41,25 @@ describe('LandingPage', () => {
     ).toHaveAttribute('href', '/login')
   })
 
+  it('uses readable muted text for the small editorial labels', () => {
+    renderLanding()
+
+    for (const text of [
+      /local-first · free · one course at a time/i,
+      /operating systems · week 4/i,
+      /2 sources read · 1.4s/i,
+      /bmu cse · group 10 · 2026/i,
+    ]) {
+      expect(screen.getByText(text)).toHaveClass('text-neutral-600')
+    }
+  })
+
+  it('keeps the dark preview label readable', () => {
+    renderLanding()
+
+    expect(screen.getByText('Mastery')).toHaveClass('text-on-panel/60')
+  })
+
   it('sends signed-in visitors straight to the app', () => {
     useAuthStore.setState({
       token: 'token',

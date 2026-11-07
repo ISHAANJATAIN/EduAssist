@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react'
+import { useEffect, useRef, type ComponentType } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { NavLink, useNavigate } from 'react-router-dom'
 
@@ -94,8 +94,7 @@ function AccountFooter({ rail = false }: { rail?: boolean }) {
       .toUpperCase() ?? '?'
 
   function handleLogout() {
-    clearSession()
-    queryClient.clear()
+    clearSession(queryClient)
     navigate('/login', { replace: true })
   }
 
@@ -152,6 +151,49 @@ interface SidebarProps {
 }
 
 export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
+  const panelRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef(onMobileClose)
+  closeRef.current = onMobileClose
+
+  useEffect(() => {
+    if (!mobileOpen) return
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const panel = panelRef.current
+    const focusables = () => Array.from(panel?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) ?? [])
+    ;(focusables()[0] ?? panel)?.focus()
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeRef.current()
+      } else if (event.key === 'Tab') {
+        const items = focusables()
+        const first = items[0]
+        const last = items[items.length - 1]
+        if (!first) {
+          event.preventDefault()
+          panel?.focus()
+        } else if (!panel?.contains(document.activeElement)) {
+          event.preventDefault()
+          ;(event.shiftKey ? last : first).focus()
+        } else if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault()
+          last.focus()
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault()
+          first.focus()
+        }
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      if (opener?.isConnected) opener.focus()
+    }
+  }, [mobileOpen])
+
   return (
     <>
       <aside className="fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-ink/10 bg-paper-deep/70 md:flex md:w-rail lg:w-sidebar">
@@ -186,6 +228,8 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
             className="absolute inset-0 bg-[#070A10]/50 backdrop-blur-sm"
           />
           <div
+            ref={panelRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-label="Navigation"

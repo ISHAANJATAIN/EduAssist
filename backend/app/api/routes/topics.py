@@ -8,8 +8,10 @@ from sqlalchemy import func, select
 
 from app.api.deps import CurrentUser, DbSession, get_or_create_course
 from app.core.errors import AppError
+from app.models.course import Course
 from app.models.document import Document
 from app.models.topic import Topic
+from app.models.user import User
 from app.schemas.topic import TopicIn, TopicOut
 from app.services.ingestion.parsers import parse_document
 from app.services.ingestion.pipeline import document_path, insert_topics
@@ -18,6 +20,24 @@ from app.services.ingestion.topic_extractor import extract_topics
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/topics", tags=["topics"])
+
+
+def _locked_course(db, user: User) -> Course:
+    user_id = user.id
+    db.scalar(select(User).where(User.id == user_id).with_for_update())
+    # Refresh cached topics and prerequisite collections only after the lock.
+    db.expire_all()
+    course = db.scalar(
+        select(Course).where(Course.user_id == user_id).with_for_update()
+    )
+    if course is None:
+        course = Course(user_id=user_id)
+        db.add(course)
+        db.flush()
+        course = db.scalar(
+            select(Course).where(Course.id == course.id).with_for_update()
+        )
+    return course
 
 
 def _topic_for(db, course, topic_id: uuid.UUID) -> Topic:
@@ -90,7 +110,7 @@ def list_topics(db: DbSession, user: CurrentUser) -> list[TopicOut]:
 
 @router.post("", response_model=TopicOut)
 def create_topic(payload: TopicIn, db: DbSession, user: CurrentUser) -> TopicOut:
-    course = get_or_create_course(db, user)
+    course = _locked_course(db, user)
     _ensure_unique_name(db, course, payload.name)
     topic = Topic(
         course_id=course.id,
@@ -110,7 +130,7 @@ def create_topic(payload: TopicIn, db: DbSession, user: CurrentUser) -> TopicOut
 def update_topic(
     topic_id: uuid.UUID, payload: TopicIn, db: DbSession, user: CurrentUser
 ) -> TopicOut:
-    course = get_or_create_course(db, user)
+    course = _locked_course(db, user)
     topic = _topic_for(db, course, topic_id)
     _ensure_unique_name(db, course, payload.name, exclude_id=topic.id)
 
@@ -137,7 +157,7 @@ def update_topic(
     response_model=None,
 )
 def delete_topic(topic_id: uuid.UUID, db: DbSession, user: CurrentUser) -> None:
-    course = get_or_create_course(db, user)
+    course = _locked_course(db, user)
     topic = _topic_for(db, course, topic_id)
     db.delete(topic)
     db.commit()
@@ -145,7 +165,7 @@ def delete_topic(topic_id: uuid.UUID, db: DbSession, user: CurrentUser) -> None:
 
 @router.post("/extract", response_model=list[TopicOut])
 def extract_from_handouts(db: DbSession, user: CurrentUser) -> list[TopicOut]:
-    course = get_or_create_course(db, user)
+    course = _locked_course(db, user)
     handouts = db.scalars(
         select(Document).where(
             Document.user_id == user.id,

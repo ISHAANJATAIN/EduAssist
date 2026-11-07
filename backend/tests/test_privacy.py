@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import func, select
+from sqlalchemy import event, func, select
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db.session import SessionLocal
@@ -17,10 +20,19 @@ from app.models.plan import StudyPlan
 from app.models.quiz import Quiz, QuizAttempt
 from app.models.topic import Topic, topic_prerequisites
 from app.models.user import User
+from app.services.ingestion import vector_store
 from app.services.ingestion.pipeline import document_path
 from app.services.safety import privacy
 
 PASSWORD = "study-buddy-1"
+
+
+@pytest.fixture(autouse=True)
+def no_real_vectors(monkeypatch):
+    def forbidden():
+        raise AssertionError("Tests must not instantiate Chroma")
+
+    monkeypatch.setattr(vector_store, "_client", forbidden)
 
 
 @pytest.fixture(autouse=True)
@@ -213,6 +225,25 @@ def test_delete_my_data_leaves_other_users_untouched(client: TestClient, monkeyp
     assert friend_path.exists()
 
 
+def test_delete_my_data_reconciles_only_the_owners_untracked_uploads(client, monkeypatch):
+    headers = _register(client)
+    _register(client, email="friend@bmu.edu.in")
+    owner_id = _user_id("owner@bmu.edu.in")
+    friend_id = _user_id("friend@bmu.edu.in")
+    paths = []
+    for user_id in (owner_id, friend_id):
+        path = document_path(user_id, uuid.uuid4(), "retained.txt")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"Private retained upload")
+        paths.append(path)
+    monkeypatch.setattr(privacy, "delete_all", lambda uid: None)
+
+    assert client.delete("/api/me/data", headers=headers).status_code == 204
+    assert not paths[0].exists()
+    assert paths[1].read_bytes() == b"Private retained upload"
+    assert client.delete("/api/me/data", headers=headers).status_code == 204
+
+
 def test_delete_my_data_requires_authentication(client: TestClient) -> None:
     response = client.delete("/api/me/data")
 
@@ -229,3 +260,86 @@ def test_delete_my_data_removes_empty_upload_directory(client: TestClient, monke
     assert client.delete("/api/me/data", headers=headers).status_code == 204
 
     assert not (get_settings().upload_dir / str(user_id)).exists()
+
+
+@pytest.mark.parametrize("failure", ["vectors", "file", "directory"])
+def test_cleanup_failure_is_safe_and_retains_metadata_for_retry(client, monkeypatch, failure):
+    headers = _register(client)
+    user_id = _user_id("owner@bmu.edu.in")
+    path = _seed("owner@bmu.edu.in")
+    diagnostic = "private-path-and-credential"
+
+    def broken(*args, **kwargs):
+        raise OSError(diagnostic)
+
+    with monkeypatch.context() as patches:
+        patches.setattr(privacy, "delete_all", broken if failure == "vectors" else lambda uid: None)
+        if failure == "file":
+            original = Path.unlink
+            def unlink(self, *args, **kwargs):
+                if self == path:
+                    broken()
+                return original(self, *args, **kwargs)
+            patches.setattr(Path, "unlink", unlink)
+        if failure == "directory":
+            original = Path.rmdir
+            def rmdir(self, *args, **kwargs):
+                if self == path.parent:
+                    broken()
+                return original(self, *args, **kwargs)
+            patches.setattr(Path, "rmdir", rmdir)
+
+        response = client.delete("/api/me/data", headers=headers)
+
+    assert response.status_code == 503
+    assert response.json()["code"] == "cleanup_failed"
+    assert diagnostic not in response.text
+    with SessionLocal() as db:
+        assert db.scalar(select(func.count()).select_from(Document).where(Document.user_id == user_id)) == 1
+        assert db.scalar(select(func.count()).select_from(ChatMessage).where(ChatMessage.user_id == user_id)) == 1
+    monkeypatch.setattr(privacy, "delete_all", lambda uid: None)
+    assert client.delete("/api/me/data", headers=headers).status_code == 204
+    assert not path.exists()
+
+
+def test_sql_cleanup_failure_retains_metadata_for_retry(client, monkeypatch):
+    headers = _register(client)
+    user_id = _user_id("owner@bmu.edu.in")
+    _seed("owner@bmu.edu.in")
+    monkeypatch.setattr(privacy, "delete_all", lambda uid: None)
+    def fail_commit(session):
+        raise RuntimeError("private-sql-diagnostic")
+    event.listen(Session, "before_commit", fail_commit)
+    try:
+        response = client.delete("/api/me/data", headers=headers)
+    finally:
+        event.remove(Session, "before_commit", fail_commit)
+    assert response.status_code == 503
+    assert response.json()["code"] == "cleanup_failed"
+    assert "private-sql-diagnostic" not in response.text
+    with SessionLocal() as db:
+        assert db.scalar(select(func.count()).select_from(Document).where(Document.user_id == user_id)) == 1
+    assert client.delete("/api/me/data", headers=headers).status_code == 204
+
+
+def test_privacy_locks_user_then_course_before_cleanup(client, monkeypatch):
+    headers = _register(client)
+    _seed("owner@bmu.edu.in")
+    locks = []
+
+    def record(state):
+        sql = str(state.statement.compile(dialect=postgresql.dialect()))
+        if "FOR UPDATE" in sql:
+            locks.append(sql)
+
+    def cleanup(uid):
+        assert len(locks) >= 2
+        assert "FROM users" in locks[0]
+        assert "FROM courses" in locks[1]
+
+    event.listen(Session, "do_orm_execute", record)
+    try:
+        monkeypatch.setattr(privacy, "delete_all", cleanup)
+        assert client.delete("/api/me/data", headers=headers).status_code == 204
+    finally:
+        event.remove(Session, "do_orm_execute", record)

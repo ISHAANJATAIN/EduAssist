@@ -29,6 +29,9 @@ let current: Theme = document.documentElement.classList.contains('dark')
   ? 'dark'
   : resolveInitialTheme()
 
+document.documentElement.classList.toggle('dark', current === 'dark')
+document.documentElement.style.colorScheme = current
+
 export function getTheme(): Theme {
   return current
 }

@@ -4,6 +4,7 @@ import math
 import uuid
 from collections import defaultdict
 from dataclasses import replace
+from time import monotonic
 
 from constraint import BacktrackingSolver, Constraint, Problem
 from sqlalchemy import select
@@ -21,14 +22,34 @@ from app.services.planner.builder import (
 )
 
 MAX_RELAXATION_STEPS = 5
+MAX_SEARCH_CHECKS = 50_000
+MAX_SEARCH_SECONDS = 2.0
 BLOCK_LABEL = f"{BLOCK_MINUTES}-minute"
 
 
+class _SearchBudget:
+    def __init__(self) -> None:
+        self.remaining = MAX_SEARCH_CHECKS
+        self.deadline = monotonic() + MAX_SEARCH_SECONDS
+
+    def check(self) -> None:
+        self.remaining -= 1
+        if self.remaining < 0 or monotonic() >= self.deadline:
+            raise AppError(
+                "planning_limit",
+                "Planning search limit reached; try fewer topics or a shorter date range. "
+                "Feasibility has not been determined.",
+                503,
+            )
+
+
 class DailyCapacity(Constraint):
-    def __init__(self, capacity: dict[int, int]) -> None:
+    def __init__(self, capacity: dict[int, int], budget: _SearchBudget) -> None:
         self.capacity = capacity
+        self.budget = budget
 
     def __call__(self, variables, domains, assignments, forwardcheck=False) -> bool:
+        self.budget.check()
         totals: dict[int, int] = defaultdict(int)
         for name in variables:
             if name in assignments:
@@ -63,8 +84,9 @@ def _slot_key(requirement: TopicRequirement) -> tuple[int, int, str]:
 
 
 def _solve_once(
-    spec: PlanSpec, requirements: list[TopicRequirement]
+    spec: PlanSpec, requirements: list[TopicRequirement], budget: _SearchBudget
 ) -> dict[str, int] | None:
+    budget.check()
     if not spec.days or not requirements:
         return None
     if (
@@ -101,7 +123,7 @@ def _solve_once(
         else:
             problem.addVariable(name, list(range(day_count)))
 
-    problem.addConstraint(DailyCapacity(capacity), all_vars)
+    problem.addConstraint(DailyCapacity(capacity, budget), all_vars)
     for names in study_vars.values():
         for earlier, later in zip(names, names[1:]):
             problem.addConstraint(FirstDayOrder(earlier, later))
@@ -271,8 +293,9 @@ def solve_plan(spec: PlanSpec) -> PlanOut:
 
     requirements = list(spec.requirements)
     notes: list[str] = []
+    budget = _SearchBudget()
     for step in range(MAX_RELAXATION_STEPS + 1):
-        solution = _solve_once(spec, requirements)
+        solution = _solve_once(spec, requirements, budget)
         if solution is not None:
             return _to_plan(spec, requirements, solution, notes)
         if step == MAX_RELAXATION_STEPS:
@@ -292,6 +315,9 @@ def solve_plan(spec: PlanSpec) -> PlanOut:
 
 
 def create_plan(db: Session, user: User, payload: PlanIn) -> PlanOut:
+    user_id = user.id
+    db.scalar(select(User).where(User.id == user_id).with_for_update())
+    db.expire_all()
     spec = build_spec(db, user, payload)
     plan = solve_plan(spec)
     db.add(
@@ -304,7 +330,7 @@ def create_plan(db: Session, user: User, payload: PlanIn) -> PlanOut:
             plan=plan.model_dump(mode="json"),
         )
     )
-    db.commit()
+    db.flush()
     return plan
 
 

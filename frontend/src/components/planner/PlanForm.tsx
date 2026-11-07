@@ -39,6 +39,9 @@ export function PlanForm({
   const [localError, setLocalError] = useState<string | null>(null)
   const nextId = useRef(1)
   const minDate = todayIso()
+  const maxDate = new Date(Date.parse(minDate) + 365 * 86_400_000)
+    .toISOString()
+    .slice(0, 10)
 
   const addOverride = () => {
     const id = nextId.current
@@ -62,6 +65,7 @@ export function PlanForm({
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
+    if (pending) return
     setLocalError(null)
 
     const hours = Number(freeHours)
@@ -69,7 +73,15 @@ export function PlanForm({
       setLocalError('Choose your exam date.')
       return
     }
-    if (!Number.isFinite(hours) || hours < 0 || hours > 24) {
+    if (examDate < minDate) {
+      setLocalError('The exam date cannot be in the past.')
+      return
+    }
+    if (examDate > maxDate) {
+      setLocalError('Choose an exam date within the next 365 days.')
+      return
+    }
+    if (!freeHours.trim() || !Number.isFinite(hours) || hours < 0 || hours > 24) {
       setLocalError('Free hours must be between 0 and 24.')
       return
     }
@@ -119,6 +131,7 @@ export function PlanForm({
             id="plan-exam-date"
             type="date"
             min={minDate}
+            max={maxDate}
             required
             value={examDate}
             onChange={(event) => setExamDate(event.target.value)}

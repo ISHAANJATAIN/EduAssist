@@ -12,7 +12,7 @@ from app.core.errors import AppError
 from app.models.mastery import TopicMastery
 from app.models.topic import Topic
 from app.models.user import User
-from app.schemas.planner import PlanIn
+from app.schemas.planner import MAX_PLANNER_DAYS, MAX_PLANNER_TOPICS, PlanIn
 from app.services.tracking.mastery import status_for
 
 BLOCK_MINUTES = 30
@@ -101,6 +101,12 @@ def _selected_topics(course, topic_ids: list[uuid.UUID] | None) -> list[Topic]:
             "Add at least one topic before building a plan.",
             409,
         )
+    if len(selected) > MAX_PLANNER_TOPICS:
+        raise AppError(
+            "validation_error",
+            f"Select at most {MAX_PLANNER_TOPICS} topics for the plan.",
+            422,
+        )
     return selected
 
 
@@ -120,6 +126,14 @@ def build_spec(db: Session, user: User, payload: PlanIn) -> PlanSpec:
             "The exam date cannot be in the past.",
             422,
         )
+
+    if (exam_date - today).days > MAX_PLANNER_DAYS:
+        raise AppError(
+            "validation_error",
+            f"Plan at most {MAX_PLANNER_DAYS} days ahead.",
+            422,
+        )
+    selected = _selected_topics(course, payload.topic_ids)
 
     free_hours = (
         payload.free_hours_per_day
@@ -148,7 +162,6 @@ def build_spec(db: Session, user: User, payload: PlanIn) -> PlanSpec:
         days.append(DaySpec(day=cursor, minutes=max(0, int(round(hours * 60)))))
         cursor += timedelta(days=1)
 
-    selected = _selected_topics(course, payload.topic_ids)
     by_id = {topic.id: topic for topic in selected}
     memo: dict[uuid.UUID, int] = {}
     mastery_rows = {

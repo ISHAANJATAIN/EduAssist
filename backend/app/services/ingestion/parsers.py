@@ -3,10 +3,29 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
+from zipfile import ZipFile
 
 from app.core.errors import AppError
 
 SUPPORTED_EXTENSIONS = {".pdf", ".pptx", ".docx", ".txt", ".md"}
+MAX_ARCHIVE_EXPANDED_BYTES = 100 * 1024 * 1024
+MAX_ARCHIVE_ENTRIES = 2000
+MAX_DOCUMENT_PAGES = 2000
+MAX_DOCUMENT_TEXT_CHARS = 2_000_000
+
+
+def _resource_limit() -> AppError:
+    return AppError("document_too_complex", "Document exceeds processing limits.", 413)
+
+
+def _preflight_archive(path: Path) -> None:
+    # Office constructors eagerly decompress XML; check before opening them.
+    with ZipFile(path) as archive:
+        entries = archive.infolist()
+        if len(entries) > MAX_ARCHIVE_ENTRIES:
+            raise _resource_limit()
+        if sum(entry.file_size for entry in entries) > MAX_ARCHIVE_EXPANDED_BYTES:
+            raise _resource_limit()
 
 
 @dataclass(frozen=True)
@@ -50,7 +69,8 @@ def _parse_docx(path: Path) -> Iterable[tuple[int, str]]:
 
 
 def _parse_text(path: Path) -> Iterable[tuple[int, str]]:
-    yield 1, path.read_text(encoding="utf-8", errors="replace")
+    with path.open(encoding="utf-8", errors="replace") as source:
+        yield 1, source.read(MAX_DOCUMENT_TEXT_CHARS + 1)
 
 
 _PARSERS = {
@@ -73,11 +93,17 @@ def parse_document(path: Path) -> list[ParsedPage]:
             415,
         )
 
-    pages = [
-        ParsedPage(number=number, text=text.strip())
-        for number, text in parser(path)
-        if text and text.strip()
-    ]
+    if suffix in {".docx", ".pptx"}:
+        _preflight_archive(path)
+
+    pages: list[ParsedPage] = []
+    total_chars = 0
+    for count, (number, text) in enumerate(parser(path), start=1):
+        total_chars += len(text or "")
+        if count > MAX_DOCUMENT_PAGES or total_chars > MAX_DOCUMENT_TEXT_CHARS:
+            raise _resource_limit()
+        if text and text.strip():
+            pages.append(ParsedPage(number=number, text=text.strip()))
     if not pages:
         raise ValueError("No extractable text found in the document.")
     return pages

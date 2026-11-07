@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /chat
+Disallow: /library
+Disallow: /dashboard
+Disallow: /planner
+Disallow: /settings
+Disallow: /api/

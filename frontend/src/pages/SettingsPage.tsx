@@ -9,7 +9,7 @@ import { ErrorBanner } from '@/components/ui/ErrorBanner'
 import { CheckIcon, InfoIcon, TrashIcon } from '@/components/ui/Icon'
 import { Spinner } from '@/components/ui/Spinner'
 import { useCourse, useUpdateCourse } from '@/hooks/useCourse'
-import { useChatStore } from '@/store/chatStore'
+import { captureSessionGeneration, isCurrentSession, useAuthStore } from '@/store/authStore'
 
 export function SettingsPage() {
   const navigate = useNavigate()
@@ -32,17 +32,22 @@ export function SettingsPage() {
 
   const remove = useMutation({
     mutationFn: deleteMyData,
-    onSuccess: () => {
-      useChatStore.getState().reset()
-      queryClient.clear()
+    onMutate: () => useAuthStore.getState().resetData(queryClient),
+    onSuccess: (_data, _variables, generation) => {
+      if (!isCurrentSession(generation)) return
+      useAuthStore.getState().resetData(queryClient)
       setConfirming(false)
       navigate('/chat', { replace: true })
     },
-    onError: () => setConfirming(false),
+    onError: (_error, _variables, generation) => {
+      if (isCurrentSession(generation)) setConfirming(false)
+    },
   })
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
+    if (updateCourse.isPending || remove.isPending) return
+    const generation = captureSessionGeneration()
     setFormError(null)
     setSaved(false)
 
@@ -52,7 +57,7 @@ export function SettingsPage() {
       setFormError('Course name cannot be empty.')
       return
     }
-    if (!Number.isFinite(hours) || hours < 0 || hours > 24) {
+    if (!freeHours.trim() || !Number.isFinite(hours) || hours < 0 || hours > 24) {
       setFormError('Free hours must be between 0 and 24.')
       return
     }
@@ -63,7 +68,7 @@ export function SettingsPage() {
         exam_date: examDate || null,
         free_hours_per_day: hours,
       },
-      { onSuccess: () => setSaved(true) },
+      { onSuccess: () => { if (isCurrentSession(generation)) setSaved(true) } },
     )
   }
 
@@ -118,6 +123,7 @@ export function SettingsPage() {
                   setName(event.target.value)
                   setSaved(false)
                 }}
+                disabled={updateCourse.isPending || remove.isPending}
                 className="field-input"
               />
             </div>
@@ -135,6 +141,7 @@ export function SettingsPage() {
                     setExamDate(event.target.value)
                     setSaved(false)
                   }}
+                  disabled={updateCourse.isPending || remove.isPending}
                   className="field-input"
                 />
                 <p className="field-hint">
@@ -156,6 +163,7 @@ export function SettingsPage() {
                     setFreeHours(event.target.value)
                     setSaved(false)
                   }}
+                  disabled={updateCourse.isPending || remove.isPending}
                   className="field-input"
                 />
                 <p className="field-hint">Study blocks are 30 minutes long.</p>

@@ -54,6 +54,16 @@ def test_first_attempt_sets_mastery_to_topic_score(db: Session) -> None:
     assert (row.mastery, row.attempts, row.last_score) == (50.0, 1, 50.0)
 
 
+def test_mastery_update_can_be_rolled_back_by_caller(db: Session) -> None:
+    user, _, (topic,) = _seed(db)
+    user_id, topic_id = user.id, topic.id
+
+    apply_attempt(db, user, [_result("1", True, topic_id)])
+    db.rollback()
+
+    assert db.get(TopicMastery, (user_id, topic_id)) is None
+
+
 def test_later_attempt_blends_new_and_old_scores(db: Session) -> None:
     user, _, (topic,) = _seed(db)
     db.add(

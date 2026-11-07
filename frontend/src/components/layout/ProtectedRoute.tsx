@@ -8,18 +8,20 @@ import { useAuthStore } from '@/store/authStore'
 
 export function ProtectedRoute() {
   const token = useAuthStore((state) => state.token)
-  const setSession = useAuthStore((state) => state.setSession)
+  const generation = useAuthStore((state) => state.generation)
+  const hydrateSession = useAuthStore((state) => state.hydrateSession)
 
   const query = useQuery({
-    queryKey: ['auth', 'me'],
-    queryFn: me,
+    queryKey: ['auth', 'me', token, generation],
+    queryFn: async () => ({ user: await me(), token, generation }),
     enabled: Boolean(token),
     retry: false,
   })
 
   useEffect(() => {
-    if (token && query.data) setSession(token, query.data)
-  }, [token, query.data, setSession])
+    const session = query.data
+    if (session?.token) hydrateSession(session.token, session.user, session.generation)
+  }, [query.data, hydrateSession])
 
   if (!token) return <Navigate to="/login" replace />
 

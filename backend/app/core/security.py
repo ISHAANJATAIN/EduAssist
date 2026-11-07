@@ -8,7 +8,7 @@ from passlib.context import CryptContext
 from app.core.config import get_settings
 from app.core.errors import AppError
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt_sha256", "bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
@@ -17,9 +17,14 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain_password: str, password_hash: str) -> bool:
     try:
+        # Preserve native legacy bcrypt truncation until a successful login rehashes.
         return pwd_context.verify(plain_password, password_hash)
     except (TypeError, ValueError):
         return False
+
+
+def legacy_bcrypt_needs_update(password_hash: str) -> bool:
+    return pwd_context.identify(password_hash) == "bcrypt"
 
 
 def create_access_token(user_id: UUID, expires_delta: timedelta | None = None) -> str:

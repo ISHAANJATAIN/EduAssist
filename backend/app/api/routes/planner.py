@@ -9,7 +9,13 @@ router = APIRouter(prefix="/plans", tags=["planner"])
 
 @router.post("", response_model=PlanOut, status_code=status.HTTP_201_CREATED)
 def build_plan(payload: PlanIn, db: DbSession, user: CurrentUser) -> PlanOut:
-    return create_plan(db, user, payload)
+    try:
+        result = create_plan(db, user, payload)
+        db.commit()
+        return result
+    except Exception:
+        db.rollback()
+        raise
 
 
 @router.get("/latest", response_model=PlanOut)

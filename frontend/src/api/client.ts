@@ -1,6 +1,5 @@
 import axios, { type AxiosError } from 'axios'
 
-import { queryClient } from '@/lib/queryClient'
 import { useAuthStore } from '@/store/authStore'
 
 export interface ApiError {
@@ -20,19 +19,30 @@ export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api'
 
 export const api = axios.create({ baseURL: API_BASE_URL })
 
+function isPublicAuthRoute(url?: string) {
+  return /(?:^|\/)auth\/(?:login|register)\/?(?:[?#].*)?$/.test(url ?? '')
+}
+
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token
-  if (token) config.headers.Authorization = `Bearer ${token}`
+  if (isPublicAuthRoute(config.url)) config.headers.delete('Authorization')
+  else if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
 
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiError>) => {
-    if (error.response?.status === 401 && import.meta.env.MODE !== 'test') {
+    const token = useAuthStore.getState().token
+    const config = error.config ?? error.response?.config
+    if (
+      error.response?.status === 401 &&
+      !isPublicAuthRoute(config?.url) &&
+      token &&
+      config?.headers.Authorization === `Bearer ${token}`
+    ) {
       useAuthStore.getState().logout()
-      queryClient.clear()
-      if (window.location.pathname !== '/login') {
+      if (import.meta.env.MODE !== 'test' && window.location.pathname !== '/login') {
         window.location.assign('/login')
       }
     }

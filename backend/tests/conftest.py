@@ -2,7 +2,7 @@ import os
 from collections.abc import Generator
 
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
-os.environ["JWT_SECRET"] = "test-secret-0123456789abcdef"
+os.environ["JWT_SECRET"] = "test-only-secret-0123456789abcdef-32"
 
 import pytest
 from fastapi.testclient import TestClient

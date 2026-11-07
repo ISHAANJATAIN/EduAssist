@@ -3,7 +3,15 @@ from __future__ import annotations
 import uuid
 from datetime import date, timedelta
 
+import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
+
+from app.core.errors import AppError
+from app.models.course import Course
+from app.models.topic import Topic
+from app.schemas.planner import PlanIn
+from app.services.planner import builder, csp
 from sqlalchemy import select
 
 from app.db.session import SessionLocal
@@ -338,6 +346,67 @@ def test_latest_plan_is_scoped_to_the_user(client: TestClient) -> None:
     other = _auth(client, "latest2@bmu.edu.in")
     assert client.get("/api/plans/latest", headers=other).status_code == 404
     assert client.get("/api/plans/latest", headers=headers).json()["id"] == plan["id"]
+
+
+@pytest.mark.parametrize("exam", [date.today() + timedelta(days=366), date(9999, 12, 31)])
+def test_plan_input_rejects_unbounded_horizons(exam):
+    with pytest.raises(ValidationError):
+        PlanIn(exam_date=exam)
+
+
+def test_plan_input_rejects_overlarge_topic_selection():
+    with pytest.raises(ValidationError):
+        PlanIn(topic_ids=[uuid.uuid4() for _ in range(101)])
+
+
+def _spec_inputs(db, topic_count=1, horizon=5):
+    user = User(email="bounds@bmu.edu.in", name="Learner", password_hash="unused")
+    db.add(user)
+    db.flush()
+    course = Course(user_id=user.id, exam_date=date.today() + timedelta(days=horizon))
+    db.add(course)
+    db.flush()
+    db.add_all([Topic(course_id=course.id, name=f"Topic {i}") for i in range(topic_count)])
+    db.commit()
+    return user
+
+
+def test_builder_rejects_unbounded_course_default_horizon(db):
+    user = _spec_inputs(db, horizon=366)
+    with pytest.raises(AppError) as error:
+        builder.build_spec(db, user, PlanIn())
+    assert error.value.status_code == 422
+
+
+def test_builder_rejects_overlarge_default_topic_selection(db):
+    user = _spec_inputs(db, topic_count=101)
+    with pytest.raises(AppError) as error:
+        builder.build_spec(db, user, PlanIn())
+    assert error.value.status_code == 422
+
+
+def test_planner_accepts_horizon_and_topic_limit_boundaries(db):
+    user = _spec_inputs(db, topic_count=100, horizon=365)
+    spec = builder.build_spec(db, user, PlanIn())
+    assert len(spec.days) == 365
+    assert len(spec.requirements) == 100
+
+
+@pytest.mark.parametrize("limit", ["work", "time"])
+def test_planner_reports_search_exhaustion_not_proven_infeasibility(db, monkeypatch, limit):
+    user = _spec_inputs(db, topic_count=2)
+    if limit == "work":
+        monkeypatch.setattr(csp, "MAX_SEARCH_CHECKS", 1, raising=False)
+    else:
+        from itertools import count
+        clock = count(start=0, step=10)
+        monkeypatch.setattr(csp, "monotonic", lambda: next(clock), raising=False)
+
+    with pytest.raises(AppError) as error:
+        csp.create_plan(db, user, PlanIn())
+    assert error.value.code == "planning_limit"
+    assert error.value.status_code == 503
+    assert db.scalars(select(StudyPlan)).all() == []
 
 
 def test_planner_chat_uses_course_settings(client: TestClient) -> None:

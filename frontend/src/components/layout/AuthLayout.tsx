@@ -60,7 +60,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
           </ul>
         </div>
         <p className="font-label relative text-[11px] uppercase tracking-[0.16em] text-on-panel/55">
-          Local model. Your material never leaves this device.
+          Local by default. External AI providers are optional.
         </p>
       </aside>
 
