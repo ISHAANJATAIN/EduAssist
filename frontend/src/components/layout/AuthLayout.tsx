@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 
 import { CheckIcon } from '@/components/ui/Icon'
 import { Logo } from '@/components/ui/Logo'
@@ -13,7 +14,9 @@ export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="grid min-h-screen lg:grid-cols-[600px_1fr]">
       <aside className="hidden bg-brand-600 p-12 text-white lg:flex lg:flex-col">
-        <Logo size={40} tone="onBrand" />
+        <Link to="/" aria-label="EduAssist home" className="inline-flex self-start">
+          <Logo size={40} tone="onBrand" />
+        </Link>
         <div className="my-auto max-w-sm">
           <h1 className="text-3xl font-semibold leading-tight">
             Study from your own material.
@@ -38,11 +41,26 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex items-center justify-center px-4 py-10 lg:px-9">
-        <div className="glass w-full max-w-[368px] p-8">
-          <div className="mb-6 lg:hidden">
-            <Logo size={34} />
+        <div className="w-full max-w-[368px]">
+          <Link
+            to="/"
+            className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-neutral-600 transition hover:text-brand-600"
+          >
+            <span aria-hidden="true">←</span> Back to home
+          </Link>
+
+          <div className="glass w-full p-8">
+            <div className="mb-6 lg:hidden">
+              <Link
+                to="/"
+                aria-label="EduAssist home"
+                className="inline-flex"
+              >
+                <Logo size={34} />
+              </Link>
+            </div>
+            {children}
           </div>
-          {children}
         </div>
       </div>
     </div>
