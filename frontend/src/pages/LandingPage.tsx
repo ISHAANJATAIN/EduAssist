@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 
 import { Logo } from '@/components/ui/Logo'
@@ -7,17 +8,24 @@ import { useAuthStore } from '@/store/authStore'
 const shell = 'mx-auto w-full max-w-[1180px] px-5 sm:px-8'
 
 const inkButton =
-  'inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#12161F] px-6 text-sm font-semibold text-[#F6F2E9] transition hover:-translate-y-0.5 hover:bg-[#1E2430] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F6F2E9]'
+  'group inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#12161F] px-6 text-sm font-semibold text-[#F6F2E9] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#1E2430] hover:shadow-[0_14px_28px_-16px_rgba(18,22,31,0.65)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F6F2E9]'
 
 const quietLink =
-  'inline-flex h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold text-[#12161F] underline decoration-[#12161F]/25 decoration-1 underline-offset-4 transition hover:decoration-[#12161F]'
+  'group inline-flex h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold text-[#12161F] underline decoration-[#12161F]/25 decoration-1 underline-offset-4 transition duration-200 hover:bg-[#12161F]/5 hover:decoration-[#12161F] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4F46E5] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F6F2E9]'
 
 const label =
   'font-label text-[11px] uppercase tracking-[0.22em] text-[#8A6A3B]'
 
-function Arrow() {
+function Arrow({ className = '' }: { className?: string }) {
   return (
-    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+      className={className}
+    >
       <path
         d="M3 8h9M8.75 4.25 12.5 8l-3.75 3.75"
         stroke="currentColor"
@@ -26,6 +34,55 @@ function Arrow() {
         strokeLinejoin="round"
       />
     </svg>
+  )
+}
+
+function Reveal({
+  children,
+  delay = 0,
+  className = '',
+}: {
+  children: ReactNode
+  delay?: number
+  className?: string
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const node = ref.current
+    if (!node) return
+    if (
+      typeof IntersectionObserver === 'undefined' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      setVisible(true)
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setVisible(true)
+            observer.disconnect()
+          }
+        }
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -6% 0px' },
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div
+      ref={ref}
+      className={`reveal${visible ? ' is-visible' : ''}${className ? ` ${className}` : ''}`}
+      style={{ '--reveal-delay': `${delay}ms` } as CSSProperties}
+    >
+      {children}
+    </div>
   )
 }
 
@@ -53,17 +110,19 @@ function SectionHeading({
   children?: ReactNode
 }) {
   return (
-    <div className="max-w-[38rem]">
-      <p className={label}>
-        {index} <span className="mx-2 text-[#8A6A3B]/50">/</span> EduAssist
-      </p>
-      <h2 className="font-display mt-4 text-[clamp(1.9rem,3.4vw,2.9rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-[#12161F]">
-        {title}
-      </h2>
-      {children ? (
-        <p className="mt-4 text-[16px] leading-[1.7] text-[#4A5060]">{children}</p>
-      ) : null}
-    </div>
+    <Reveal>
+      <div className="max-w-[38rem]">
+        <p className={label}>
+          {index} <span className="mx-2 text-[#8A6A3B]/50">/</span> EduAssist
+        </p>
+        <h2 className="font-display mt-4 text-[clamp(1.9rem,3.4vw,2.9rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-[#12161F]">
+          {title}
+        </h2>
+        {children ? (
+          <p className="mt-4 text-[16px] leading-[1.7] text-[#4A5060]">{children}</p>
+        ) : null}
+      </div>
+    </Reveal>
   )
 }
 
@@ -243,7 +302,7 @@ export function LandingPage() {
             </Link>
             <Link
               to="/register"
-              className="inline-flex h-9 items-center rounded-full bg-[#12161F] px-4 text-[13px] font-semibold text-[#F6F2E9] transition hover:bg-[#1E2430]"
+              className="inline-flex h-9 items-center rounded-full bg-[#12161F] px-4 text-[13px] font-semibold text-[#F6F2E9] transition duration-200 hover:-translate-y-0.5 hover:bg-[#1E2430] hover:shadow-[0_10px_20px_-12px_rgba(18,22,31,0.65)] active:translate-y-0"
             >
               Get started
             </Link>
@@ -272,10 +331,12 @@ export function LandingPage() {
 
             <div className="mt-9 flex flex-wrap items-center gap-x-2 gap-y-1">
               <Link to="/register" className={inkButton}>
-                Start studying free <Arrow />
+                Start studying free{' '}
+                <Arrow className="transition-transform duration-200 group-hover:translate-x-1" />
               </Link>
               <a href="#method" className={quietLink}>
-                See how it works <Arrow />
+                See how it works{' '}
+                <Arrow className="transition-transform duration-200 group-hover:translate-x-1" />
               </a>
             </div>
 
@@ -308,15 +369,17 @@ export function LandingPage() {
                   key={problem.title}
                   className="border-t border-[#12161F]/15 pt-5"
                 >
-                  <p className="font-label text-[10px] tracking-[0.2em] text-[#8A6A3B]">
-                    0{i + 1}
-                  </p>
-                  <h3 className="font-display mt-3 text-[21px] leading-snug">
-                    {problem.title}
-                  </h3>
-                  <p className="mt-2.5 text-[14.5px] leading-[1.65] text-[#565C6B]">
-                    {problem.body}
-                  </p>
+                  <Reveal delay={i * 90}>
+                    <p className="font-label text-[10px] tracking-[0.2em] text-[#8A6A3B]">
+                      0{i + 1}
+                    </p>
+                    <h3 className="font-display mt-3 text-[21px] leading-snug">
+                      {problem.title}
+                    </h3>
+                    <p className="mt-2.5 text-[14.5px] leading-[1.65] text-[#565C6B]">
+                      {problem.body}
+                    </p>
+                  </Reveal>
                 </div>
               ))}
             </div>
@@ -330,23 +393,25 @@ export function LandingPage() {
           </SectionHeading>
 
           <div className="mt-14 grid gap-4 sm:grid-cols-2">
-            {benefits.map((benefit) => (
+            {benefits.map((benefit, i) => (
               <article
                 key={benefit.index}
                 className="group rounded-2xl border border-[#12161F]/10 bg-[#FFFDF7] p-7 transition duration-300 hover:-translate-y-1 hover:border-[#12161F]/25 hover:shadow-[0_24px_48px_-32px_rgba(18,22,31,0.4)] sm:p-8"
               >
-                <div className="flex items-baseline justify-between">
-                  <p className="font-label text-[10px] tracking-[0.2em] text-[#8A6A3B]">
-                    {benefit.index}
+                <Reveal delay={i * 70}>
+                  <div className="flex items-baseline justify-between">
+                    <p className="font-label text-[10px] tracking-[0.2em] text-[#8A6A3B]">
+                      {benefit.index}
+                    </p>
+                    <span className="h-px w-8 bg-[#12161F]/10 transition group-hover:bg-[#8A6A3B]/50" aria-hidden="true" />
+                  </div>
+                  <h3 className="font-display mt-5 text-[24px] leading-tight tracking-[-0.02em]">
+                    {benefit.title}
+                  </h3>
+                  <p className="mt-3 text-[14.5px] leading-[1.68] text-[#565C6B]">
+                    {benefit.body}
                   </p>
-                  <span className="h-px w-8 bg-[#12161F]/10 transition group-hover:bg-[#8A6A3B]/50" aria-hidden="true" />
-                </div>
-                <h3 className="font-display mt-5 text-[24px] leading-tight tracking-[-0.02em]">
-                  {benefit.title}
-                </h3>
-                <p className="mt-3 text-[14.5px] leading-[1.68] text-[#565C6B]">
-                  {benefit.body}
-                </p>
+                </Reveal>
               </article>
             ))}
           </div>
@@ -359,24 +424,26 @@ export function LandingPage() {
             <ol className="mt-14 grid gap-12 sm:grid-cols-3 sm:gap-8">
               {steps.map((step, i) => (
                 <li key={step.index} className="relative">
-                  <div className="flex items-center gap-4">
-                    <span className="font-display text-[44px] leading-none text-[#12161F]/20">
-                      {step.index}
-                    </span>
-                    <span className="h-px flex-1 bg-[#12161F]/15" aria-hidden="true" />
-                  </div>
-                  <h3 className="mt-6 text-[17px] font-semibold">{step.title}</h3>
-                  <p className="mt-2 text-[14.5px] leading-[1.65] text-[#565C6B]">
-                    {step.body}
-                  </p>
-                  {i < steps.length - 1 ? (
-                    <span
-                      aria-hidden="true"
-                      className="absolute -right-4 top-4 hidden text-[#8A6A3B]/50 sm:block"
-                    >
-                      <Arrow />
-                    </span>
-                  ) : null}
+                  <Reveal delay={i * 110}>
+                    <div className="flex items-center gap-4">
+                      <span className="font-display text-[44px] leading-none text-[#12161F]/20">
+                        {step.index}
+                      </span>
+                      <span className="h-px flex-1 bg-[#12161F]/15" aria-hidden="true" />
+                    </div>
+                    <h3 className="mt-6 text-[17px] font-semibold">{step.title}</h3>
+                    <p className="mt-2 text-[14.5px] leading-[1.65] text-[#565C6B]">
+                      {step.body}
+                    </p>
+                    {i < steps.length - 1 ? (
+                      <span
+                        aria-hidden="true"
+                        className="absolute -right-4 top-4 hidden text-[#8A6A3B]/50 sm:block"
+                      >
+                        <Arrow />
+                      </span>
+                    ) : null}
+                  </Reveal>
                 </li>
               ))}
             </ol>
@@ -386,16 +453,18 @@ export function LandingPage() {
         <section id="privacy" className="bg-[#12161F] text-[#F6F2E9]">
           <div className={`${shell} grid gap-12 py-20 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:py-28`}>
             <div>
-              <p className="font-label text-[11px] uppercase tracking-[0.22em] text-[#C79A5B]">
-                04 / Privacy
-              </p>
-              <h2 className="font-display mt-4 text-[clamp(1.9rem,3.4vw,2.9rem)] font-semibold leading-[1.08] tracking-[-0.03em]">
-                Your material stays yours.
-              </h2>
-              <p className="mt-4 max-w-[28rem] text-[15px] leading-[1.7] text-[#F6F2E9]/60">
-                EduAssist is built to run on your machine, not someone else&apos;s
-                server.
-              </p>
+              <Reveal>
+                <p className="font-label text-[11px] uppercase tracking-[0.22em] text-[#C79A5B]">
+                  04 / Privacy
+                </p>
+                <h2 className="font-display mt-4 text-[clamp(1.9rem,3.4vw,2.9rem)] font-semibold leading-[1.08] tracking-[-0.03em]">
+                  Your material stays yours.
+                </h2>
+                <p className="mt-4 max-w-[28rem] text-[15px] leading-[1.7] text-[#F6F2E9]/60">
+                  EduAssist is built to run on your machine, not someone else&apos;s
+                  server.
+                </p>
+              </Reveal>
             </div>
 
             <ul className="grid gap-5">
@@ -403,12 +472,14 @@ export function LandingPage() {
                 'Answers run on a local Ollama model by default — no upload required.',
                 'Documents, embeddings, chats and plans live in your own storage.',
                 'One click deletes everything it generated, while keeping your login.',
-              ].map((item) => (
-                <li key={item} className="flex gap-4 border-b border-white/10 pb-5 last:border-0 last:pb-0">
-                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C79A5B]/40 text-[#C79A5B]">
-                    <Check />
-                  </span>
-                  <p className="text-[14.5px] leading-[1.65] text-[#F6F2E9]/80">{item}</p>
+              ].map((item, i) => (
+                <li key={item} className="border-b border-white/10 pb-5 last:border-0 last:pb-0">
+                  <Reveal className="flex gap-4" delay={i * 90}>
+                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#C79A5B]/40 text-[#C79A5B]">
+                      <Check />
+                    </span>
+                    <p className="text-[14.5px] leading-[1.65] text-[#F6F2E9]/80">{item}</p>
+                  </Reveal>
                 </li>
               ))}
             </ul>
@@ -416,24 +487,27 @@ export function LandingPage() {
         </section>
 
         <section className={`${shell} py-24 text-center lg:py-32`}>
-          <p className="font-label text-[11px] uppercase tracking-[0.22em] text-[#8A6A3B]">
-            Ready when you are
-          </p>
-          <h2 className="font-display mx-auto mt-5 max-w-[34rem] text-[clamp(2.2rem,4.4vw,3.6rem)] font-semibold leading-[1.05] tracking-[-0.035em]">
-            Bring your syllabus. Leave the guesswork.
-          </h2>
-          <p className="mx-auto mt-5 max-w-[30rem] text-[15.5px] leading-[1.7] text-[#4A5060]">
-            Create an account, add one course, and ask your first question in
-            under five minutes.
-          </p>
-          <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-            <Link to="/register" className={inkButton}>
-              Create your account <Arrow />
-            </Link>
-            <Link to="/login" className={quietLink}>
-              I already have one
-            </Link>
-          </div>
+          <Reveal>
+            <p className="font-label text-[11px] uppercase tracking-[0.22em] text-[#8A6A3B]">
+              Ready when you are
+            </p>
+            <h2 className="font-display mx-auto mt-5 max-w-[34rem] text-[clamp(2.2rem,4.4vw,3.6rem)] font-semibold leading-[1.05] tracking-[-0.035em]">
+              Bring your syllabus. Leave the guesswork.
+            </h2>
+            <p className="mx-auto mt-5 max-w-[30rem] text-[15.5px] leading-[1.7] text-[#4A5060]">
+              Create an account, add one course, and ask your first question in
+              under five minutes.
+            </p>
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+              <Link to="/register" className={inkButton}>
+                Create your account{' '}
+                <Arrow className="transition-transform duration-200 group-hover:translate-x-1" />
+              </Link>
+              <Link to="/login" className={quietLink}>
+                I already have one
+              </Link>
+            </div>
+          </Reveal>
         </section>
       </main>
 
