@@ -11,6 +11,7 @@ import {
   SettingsIcon,
 } from '@/components/ui/Icon'
 import { Logo } from '@/components/ui/Logo'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { useAuthStore } from '@/store/authStore'
 
 const navItems: {
@@ -48,7 +49,7 @@ function NavList({
               rail ? 'justify-center px-0 lg:justify-start lg:px-4' : 'px-4'
             } ${
               isActive
-                ? 'bg-ink font-semibold text-paper shadow-[0_10px_22px_-14px_rgba(18,22,31,0.7)]'
+                ? 'bg-action font-semibold text-on-action shadow-[0_10px_22px_-14px_rgb(var(--shadow-rgb)/0.7)]'
                 : 'text-neutral-700 hover:bg-ink/5 hover:text-ink'
             }`
           }
@@ -58,6 +59,23 @@ function NavList({
         </NavLink>
       ))}
     </nav>
+  )
+}
+
+function ThemeRow({ rail = false }: { rail?: boolean }) {
+  return (
+    <div
+      className={`flex items-center pb-3 ${
+        rail ? 'justify-center lg:justify-between lg:px-1' : 'justify-between px-1'
+      }`}
+    >
+      <span
+        className={`text-xs text-neutral-600 ${rail ? 'hidden lg:inline' : ''}`}
+      >
+        Theme
+      </span>
+      <ThemeToggle />
+    </div>
   )
 }
 
@@ -150,6 +168,10 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
           <NavList rail />
         </div>
 
+        <div className="px-3">
+          <ThemeRow rail />
+        </div>
+
         <div className="px-3 py-4">
           <AccountFooter rail />
         </div>
@@ -161,7 +183,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
             type="button"
             aria-label="Close navigation"
             onClick={onMobileClose}
-            className="absolute inset-0 bg-ink/30 backdrop-blur-sm"
+            className="absolute inset-0 bg-[#070A10]/50 backdrop-blur-sm"
           />
           <div
             role="dialog"
@@ -182,6 +204,9 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
             </div>
             <div className="mt-4 flex-1 overflow-y-auto">
               <NavList onNavigate={onMobileClose} />
+            </div>
+            <div className="px-1">
+              <ThemeRow />
             </div>
             <AccountFooter />
           </div>

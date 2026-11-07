@@ -12,11 +12,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants: Record<ButtonVariant, string> = {
   primary:
-    'bg-ink text-paper shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:-translate-y-0.5 hover:bg-ink-soft hover:shadow-[0_14px_28px_-16px_rgba(18,22,31,0.65)] active:translate-y-0',
+    'bg-action text-on-action shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] hover:-translate-y-0.5 hover:bg-action-hover hover:shadow-[0_14px_28px_-16px_rgb(var(--shadow-rgb)/0.65)] active:translate-y-0',
   secondary:
-    'border border-ink/15 bg-paper-card text-ink hover:-translate-y-0.5 hover:border-ink/35 hover:shadow-[0_12px_24px_-18px_rgba(18,22,31,0.45)] active:translate-y-0',
+    'border border-ink/15 bg-paper-card text-ink hover:-translate-y-0.5 hover:border-ink/35 hover:shadow-[0_12px_24px_-18px_rgb(var(--shadow-rgb)/0.45)] active:translate-y-0',
   danger:
-    'bg-danger text-paper hover:-translate-y-0.5 hover:bg-danger-text hover:shadow-[0_14px_28px_-16px_rgba(185,28,28,0.55)] active:translate-y-0',
+    'bg-danger text-danger-on hover:-translate-y-0.5 hover:bg-danger-text hover:shadow-[0_14px_28px_-16px_rgb(var(--danger)/0.55)] active:translate-y-0',
   ghost: 'text-neutral-700 hover:bg-ink/5 hover:text-ink',
 }
 

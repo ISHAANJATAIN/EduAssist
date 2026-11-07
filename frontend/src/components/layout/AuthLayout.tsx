@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { CheckIcon } from '@/components/ui/Icon'
 import { Logo } from '@/components/ui/Logo'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 const features = [
   'Cited answers, every time',
@@ -17,7 +18,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         aria-hidden="true"
         className="landing-grain pointer-events-none fixed inset-0 z-50"
       />
-      <aside className="relative hidden overflow-hidden bg-ink p-12 text-paper lg:flex lg:flex-col">
+      <aside className="relative hidden overflow-hidden bg-panel p-12 text-on-panel lg:flex lg:flex-col">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full bg-[radial-gradient(closest-side,rgba(199,154,91,0.22),transparent)]"
@@ -41,14 +42,14 @@ export function AuthLayout({ children }: { children: ReactNode }) {
             Study from your own{' '}
             <em className="font-normal italic text-gold-leaf">material.</em>
           </h1>
-          <p className="mt-5 text-[15px] leading-relaxed text-paper/70">
+          <p className="mt-5 text-[15px] leading-relaxed text-on-panel/70">
             One place to ask, practise and plan.
           </p>
           <ul className="mt-9 space-y-4 text-sm">
             {features.map((feature) => (
               <li
                 key={feature}
-                className="flex items-center gap-3 border-b border-white/10 pb-4 last:border-0 last:pb-0"
+                className="flex items-center gap-3 border-b border-[#FFFDF7]/10 pb-4 last:border-0 last:pb-0"
               >
                 <span className="flex h-7 w-7 items-center justify-center rounded-full border border-gold-light/40 text-gold-leaf">
                   <CheckIcon size={14} />
@@ -58,25 +59,28 @@ export function AuthLayout({ children }: { children: ReactNode }) {
             ))}
           </ul>
         </div>
-        <p className="font-label relative text-[11px] uppercase tracking-[0.16em] text-paper/55">
+        <p className="font-label relative text-[11px] uppercase tracking-[0.16em] text-on-panel/55">
           Local model. Your material never leaves this device.
         </p>
       </aside>
 
       <div className="flex items-center justify-center px-4 py-10 lg:px-9">
         <div className="w-full max-w-[368px]">
-          <Link
-            to="/"
-            className="group mb-4 inline-flex items-center gap-1.5 rounded-full text-sm font-medium text-neutral-600 transition hover:text-ink"
-          >
-            <span
-              aria-hidden="true"
-              className="transition-transform duration-200 group-hover:-translate-x-1"
+          <div className="mb-4 flex items-center justify-between">
+            <Link
+              to="/"
+              className="group inline-flex items-center gap-1.5 rounded-full text-sm font-medium text-neutral-600 transition hover:text-ink"
             >
-              ←
-            </span>{' '}
-            Back to home
-          </Link>
+              <span
+                aria-hidden="true"
+                className="transition-transform duration-200 group-hover:-translate-x-1"
+              >
+                ←
+              </span>{' '}
+              Back to home
+            </Link>
+            <ThemeToggle />
+          </div>
 
           <div className="glass w-full p-8">
             <div className="mb-6 lg:hidden">

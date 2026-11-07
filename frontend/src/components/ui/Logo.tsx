@@ -16,7 +16,7 @@ export function Logo({
   const id = useId().replace(/:/g, '')
   const tileId = `logo-tile-${id}`
   const goldId = `logo-gold-${id}`
-  const wordmarkColor = tone === 'onBrand' ? '#F6F2E9' : '#12161F'
+  const toneClass = tone === 'onBrand' ? 'text-on-panel' : 'text-ink'
 
   const mark = (
     <>
@@ -84,7 +84,7 @@ export function Logo({
         viewBox="0 0 40 40"
         role="img"
         aria-label="EduAssist"
-        className={className}
+        className={`${toneClass} ${className}`}
       >
         {defs}
         {mark}
@@ -99,7 +99,7 @@ export function Logo({
       viewBox="0 0 176 40"
       role="img"
       aria-label="EduAssist"
-      className={className}
+      className={`${toneClass} ${className}`}
     >
       {defs}
       {mark}
@@ -110,7 +110,7 @@ export function Logo({
         fontSize="21"
         fontWeight="600"
         letterSpacing="-0.4"
-        fill={wordmarkColor}
+        fill="currentColor"
       >
         EduAssist
       </text>

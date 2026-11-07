@@ -74,7 +74,7 @@ export function ConfirmDialog({
   const canConfirm = !confirmText || typed === confirmText
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/30 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070A10]/45 p-4 backdrop-blur-sm">
       <div
         ref={panelRef}
         role="dialog"

@@ -13,11 +13,14 @@ import {
 import type { MasteryStatus, TopicPerformance } from '@/api/performance'
 
 const STATUS_COLORS: Record<MasteryStatus, string> = {
-  untested: '#A39B8B',
-  weak: '#DC2626',
-  developing: '#D97706',
-  strong: '#16A34A',
+  untested: 'rgb(var(--mastery-untested))',
+  weak: 'rgb(var(--danger))',
+  developing: 'rgb(var(--warning))',
+  strong: 'rgb(var(--success))',
 }
+
+const GRID_COLOR = 'rgb(var(--line))'
+const TICK_COLOR = 'rgb(var(--content-muted))'
 
 const LEGEND: ReadonlyArray<{ status: MasteryStatus; label: string }> = [
   { status: 'weak', label: 'Weak' },
@@ -63,14 +66,14 @@ export function MasteryChart({ topics }: { topics: TopicPerformance[] }) {
           >
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="#E4DDCD"
+              stroke={GRID_COLOR}
               horizontal={false}
             />
             <XAxis
               type="number"
               domain={[0, 100]}
               ticks={[0, 25, 50, 75, 100]}
-              tick={{ fontSize: 12, fill: '#656A75' }}
+              tick={{ fontSize: 12, fill: TICK_COLOR }}
               tickLine={false}
               axisLine={false}
             />
@@ -78,17 +81,26 @@ export function MasteryChart({ topics }: { topics: TopicPerformance[] }) {
               type="category"
               dataKey="name"
               width={132}
-              tick={{ fontSize: 12, fill: '#656A75' }}
+              tick={{ fontSize: 12, fill: TICK_COLOR }}
               tickLine={false}
               axisLine={false}
             />
-            <Tooltip />
+            <Tooltip
+              contentStyle={{
+                background: 'rgb(var(--surface-card))',
+                border: '1px solid rgb(var(--line))',
+                borderRadius: 10,
+                color: 'rgb(var(--ink))',
+                fontSize: 12,
+              }}
+              labelStyle={{ color: 'rgb(var(--content-soft))' }}
+            />
             <Bar dataKey="mastery" name="Mastery" maxBarSize={18} radius={[0, 6, 6, 0]}>
               <LabelList
                 dataKey="mastery"
                 position="right"
                 formatter={(value: number) => `${value}%`}
-                fill="#656A75"
+                fill={TICK_COLOR}
                 fontSize={12}
               />
               {data.map((entry) => (

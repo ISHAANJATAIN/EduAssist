@@ -24,7 +24,7 @@ export function QuizResult({ quiz, attempt }: QuizResultProps) {
           aria-label={`Score ${score} percent`}
           className="grid h-20 w-20 shrink-0 place-items-center rounded-full"
           style={{
-            background: `conic-gradient(#8A6A3B ${score}%, #E4DDCD 0)`,
+            background: `conic-gradient(rgb(var(--gold)) ${score}%, rgb(var(--line)) 0)`,
           }}
         >
           <div className="grid h-16 w-16 place-items-center rounded-full bg-white">

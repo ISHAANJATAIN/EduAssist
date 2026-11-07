@@ -4,6 +4,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { MenuIcon } from '@/components/ui/Icon'
 import { Logo } from '@/components/ui/Logo'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { useCourse } from '@/hooks/useCourse'
 import { formatDate } from '@/lib/format'
 
@@ -54,16 +55,19 @@ export function AppShell() {
             <MenuIcon size={22} />
           </button>
           <Logo size={26} />
-          <span className="w-8" aria-hidden="true" />
+          <ThemeToggle />
         </header>
 
         <header className="hidden h-16 items-center justify-between border-b border-ink/10 bg-paper/85 px-6 backdrop-blur md:flex">
           <h1 className="text-[22px] font-semibold text-ink">{title}</h1>
-          {examDate ? (
-            <span className="font-label rounded-full border border-gold-light/40 bg-paper-card px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-gold">
-              AI · Exam {formatDate(examDate)}
-            </span>
-          ) : null}
+          <div className="flex items-center gap-3">
+            {examDate ? (
+              <span className="font-label rounded-full border border-gold-light/40 bg-paper-card px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-gold">
+                AI · Exam {formatDate(examDate)}
+              </span>
+            ) : null}
+            <ThemeToggle />
+          </div>
         </header>
 
         <main className="mx-auto w-full max-w-content px-4 py-6 md:px-6">
