@@ -108,3 +108,14 @@ Postgres). By default all generation runs locally through Ollama; enabling the o
 sends question text and retrieved excerpts to Groq. Settings → Delete my data removes uploads,
 vectors, topics, quizzes and attempts, mastery, plans and chat, and keeps your login and course
 settings.
+
+## Known advisories
+All services bind to `127.0.0.1`, so they are reachable only from this machine. Before hosting
+publicly, address these upstream findings:
+
+| Component | Finding | Impact here |
+|---|---|---|
+| ChromaDB 1.5.9 | CVE-2026-45829/45830/45831/45833, no fixed release | None. The CVEs target the Chroma HTTP server; this app uses the embedded client only. |
+| `python:3.11-slim` | zlib High x2, no fixed Debian 13 package | The upstream fix is zlib 1.3.2; Debian 13 has not shipped it, so the latest Debian security update does not clear the scanner finding. |
+| `nginx:stable-alpine` | musl and libxml2 High, no fixed package | No fixed musl build exists upstream; Alpine tracks it. |
+| `postgres:16` | gosu Go stdlib Critical/High, no fixed image | gosu only drops privileges at container start; the database is localhost-only and not exposed to untrusted input. |
