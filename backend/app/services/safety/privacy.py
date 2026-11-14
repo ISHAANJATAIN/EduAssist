@@ -61,6 +61,12 @@ def delete_all_user_data(user: User) -> None:
             upload_directory.rmdir()
         except FileNotFoundError:
             pass
+        except OSError:
+            # Windows sync clients and anti-virus can hold an empty folder open;
+            # every file inside is already deleted, so a leftover folder is harmless.
+            logger.warning(
+                "Could not remove empty upload directory %s", upload_directory, exc_info=True
+            )
     except Exception as exc:
         db.rollback()
         logger.warning("Could not clean study data for user %s", user_id, exc_info=True)

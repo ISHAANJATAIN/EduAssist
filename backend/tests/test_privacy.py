@@ -270,7 +270,39 @@ def test_delete_my_data_removes_empty_upload_directory(client: TestClient, monke
     assert not (get_settings().upload_dir / str(user_id)).exists()
 
 
-@pytest.mark.parametrize("failure", ["vectors", "file", "directory"])
+def test_locked_upload_directory_does_not_block_deletion(client, monkeypatch):
+    headers = _register(client)
+    user_id = _user_id("owner@bmu.edu.in")
+    path = _seed("owner@bmu.edu.in")
+    monkeypatch.setattr(privacy, "delete_all", lambda uid: None)
+    original = Path.rmdir
+
+    def locked(self, *args, **kwargs):
+        if self == path.parent:
+            raise PermissionError(13, "Access is denied", str(self))
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "rmdir", locked)
+
+    response = client.delete("/api/me/data", headers=headers)
+
+    assert response.status_code == 204
+    assert not path.exists()
+    with SessionLocal() as db:
+        course = db.scalar(select(Course).where(Course.user_id == user_id))
+        assert course is not None
+        assert db.scalar(
+            select(func.count()).select_from(Document).where(Document.user_id == user_id)
+        ) == 0
+        assert db.scalar(
+            select(func.count()).select_from(Topic).where(Topic.course_id == course.id)
+        ) == 0
+        assert db.scalar(
+            select(func.count()).select_from(ChatSession).where(ChatSession.user_id == user_id)
+        ) == 0
+
+
+@pytest.mark.parametrize("failure", ["vectors", "file"])
 def test_cleanup_failure_is_safe_and_retains_metadata_for_retry(client, monkeypatch, failure):
     headers = _register(client)
     user_id = _user_id("owner@bmu.edu.in")
@@ -289,13 +321,6 @@ def test_cleanup_failure_is_safe_and_retains_metadata_for_retry(client, monkeypa
                     broken()
                 return original(self, *args, **kwargs)
             patches.setattr(Path, "unlink", unlink)
-        if failure == "directory":
-            original = Path.rmdir
-            def rmdir(self, *args, **kwargs):
-                if self == path.parent:
-                    broken()
-                return original(self, *args, **kwargs)
-            patches.setattr(Path, "rmdir", rmdir)
 
         response = client.delete("/api/me/data", headers=headers)
 
