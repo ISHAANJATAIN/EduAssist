@@ -45,6 +45,13 @@ export function useChat() {
   const hydrate = useChatStore((state) => state.hydrate)
   const setSessions = useChatStore((state) => state.setSessions)
 
+  const syncSessionList = () => {
+    queryClient.setQueryData<ChatSession[]>(
+      [...chatSessionsKey, generation],
+      useChatStore.getState().sessions,
+    )
+  }
+
   const latestQuery = useQuery({
     queryKey: [...chatLatestKey, generation],
     queryFn: fetchLatest,
@@ -106,6 +113,7 @@ export function useChat() {
       } else {
         store.setSession(touchedSession(known))
       }
+      syncSessionList()
       if (data.reply.type === 'plan') queryClient.setQueryData(planKey, data.reply.plan)
     },
     onError: (cause, variables) => {
@@ -146,6 +154,7 @@ export function useChat() {
       const store = useChatStore.getState()
       const wasActive = store.session?.id === sessionId
       store.removeSession(sessionId)
+      syncSessionList()
       if (wasActive) {
         queryClient.setQueryData<ChatSessionLatest>([...chatLatestKey, generation], {
           session: null,
@@ -160,6 +169,7 @@ export function useChat() {
     onSuccess: () => {
       if (!isCurrentSession(generation)) return
       useChatStore.getState().clearSessions()
+      syncSessionList()
       queryClient.setQueryData<ChatSessionLatest>([...chatLatestKey, generation], {
         session: null,
         messages: [],

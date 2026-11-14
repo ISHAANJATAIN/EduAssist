@@ -223,6 +223,52 @@ it('deletes every conversation after typing DELETE ALL', async () => {
   expect(dialog).not.toBeInTheDocument()
 })
 
+it('keeps a deleted conversation gone after leaving and returning to chat', async () => {
+  const user = userEvent.setup()
+  sessionsData = sessionsFixture
+  const first = render(<QueryClientProvider client={client}><ChatPage /></QueryClientProvider>)
+  await respond('/chat/sessions/latest', { session: null, messages: [] })
+  expect((await screen.findAllByText('First chat')).length).toBeGreaterThan(0)
+
+  await user.click(screen.getAllByRole('button', { name: 'Delete First chat' })[0])
+  await user.click(
+    within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete conversation' }),
+  )
+  await waitFor(() => expect(requests.some((r) => r.config.url === '/chat/sessions/ws1')).toBe(true))
+  const request = requests.find((r) => r.config.url === '/chat/sessions/ws1')!
+  await act(async () => request.resolve(settled(request.config, null, 204)))
+  await waitFor(() => expect(screen.queryByText('First chat')).not.toBeInTheDocument())
+
+  first.unmount()
+  sessionsData = [sessionsFixture[1]]
+  render(<QueryClientProvider client={client}><ChatPage /></QueryClientProvider>)
+
+  expect((await screen.findAllByText('Second chat')).length).toBeGreaterThan(0)
+  expect(screen.queryByText('First chat')).not.toBeInTheDocument()
+})
+
+it('keeps a newly created conversation listed after leaving and returning to chat', async () => {
+  const user = userEvent.setup()
+  sessionsData = [sessionsFixture[0]]
+  const first = render(<QueryClientProvider client={client}><ChatPage /></QueryClientProvider>)
+  await respond('/chat/sessions/latest', { session: null, messages: [] })
+  await user.type(screen.getByLabelText('Message'), 'Second question')
+  await user.click(screen.getByRole('button', { name: 'Send message' }))
+  await waitFor(() => expect(requests.some((r) => r.config.url === '/chat')).toBe(true))
+  const sendRequest = requests.find((r) => r.config.url === '/chat')!
+  await act(async () => sendRequest.resolve(settled(sendRequest.config, {
+    message_id: 'm3', session_id: 'ws2', intent: 'rag',
+    reply: { type: 'answer', text: 'Second answer', grounded: false, citations: [] },
+  })))
+  const list = () => within(screen.getByRole('complementary'))
+  expect(await list().findByText('Second question')).toBeInTheDocument()
+
+  first.unmount()
+  render(<QueryClientProvider client={client}><ChatPage /></QueryClientProvider>)
+
+  expect(await list().findByText('Second question')).toBeInTheDocument()
+})
+
 it('cancelling keeps the conversation and sends no request', async () => {
   const user = userEvent.setup()
   sessionsData = sessionsFixture
