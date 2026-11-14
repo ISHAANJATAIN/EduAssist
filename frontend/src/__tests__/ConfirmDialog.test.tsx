@@ -25,6 +25,23 @@ function DialogHarness({ loading = false, mounted = true }: { loading?: boolean;
   )
 }
 
+function TypedHarness() {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <button onClick={() => setOpen(true)}>Clear material</button>
+      <ConfirmDialog
+        open={open}
+        title="Clear material?"
+        confirmLabel="Clear"
+        confirmText="CLEAR"
+        onCancel={() => setOpen(false)}
+        onConfirm={() => setOpen(false)}
+      />
+    </>
+  )
+}
+
 describe('ConfirmDialog', () => {
   it.each(['Cancel', 'Escape', 'Delete'])('restores focus to the opener after %s', async (action) => {
     const user = userEvent.setup()
@@ -92,5 +109,16 @@ describe('ConfirmDialog', () => {
     expect(screen.getByRole('button', { name: 'Delete' })).toHaveFocus()
     await user.tab()
     expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus()
+  })
+
+  it('accepts the typed confirmation in any letter case', async () => {
+    const user = userEvent.setup()
+    render(<TypedHarness />)
+    await user.click(screen.getByRole('button', { name: 'Clear material' }))
+    const confirm = screen.getByRole('button', { name: 'Clear' })
+
+    expect(confirm).toBeDisabled()
+    await user.type(screen.getByLabelText('Type CLEAR to confirm'), 'clear')
+    expect(confirm).toBeEnabled()
   })
 })

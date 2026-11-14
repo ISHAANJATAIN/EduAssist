@@ -118,7 +118,7 @@ it('clears the active conversation only after typing CLEAR to confirm', async ()
   const dialog = screen.getByRole('dialog')
   const confirm = within(dialog).getByRole('button', { name: 'Clear chat' })
   expect(confirm).toBeDisabled()
-  await user.type(within(dialog).getByLabelText('Type CLEAR to confirm'), 'CLEAR')
+  await user.type(within(dialog).getByLabelText('Type CLEAR to confirm'), 'clear')
   await user.click(confirm)
 
   await waitFor(() => expect(requests.some((r) => r.config.url === '/chat/sessions/ws1/messages')).toBe(true))
@@ -154,7 +154,7 @@ async function confirmDialogAction(
   return dialog
 }
 
-it('deletes the open conversation and leaves you on a fresh chat', async () => {
+it('deletes the open conversation after a single confirmation', async () => {
   const user = userEvent.setup()
   sessionsData = sessionsFixture
   render(<QueryClientProvider client={client}><ChatPage /></QueryClientProvider>)
@@ -166,7 +166,10 @@ it('deletes the open conversation and leaves you on a fresh chat', async () => {
   })
   expect(await screen.findByText('Deletable question')).toBeInTheDocument()
 
-  const dialog = await confirmDialogAction(user, 'Delete First chat', 'DELETE', 'Delete conversation')
+  await user.click(screen.getAllByRole('button', { name: 'Delete First chat' })[0])
+  const dialog = screen.getByRole('dialog')
+  expect(within(dialog).queryByLabelText(/to confirm/i)).not.toBeInTheDocument()
+  await user.click(within(dialog).getByRole('button', { name: 'Delete conversation' }))
 
   await waitFor(() => expect(requests.some((r) => r.config.url === '/chat/sessions/ws1' && r.config.method === 'delete')).toBe(true))
   const request = requests.find((r) => r.config.url === '/chat/sessions/ws1')!
@@ -186,7 +189,10 @@ it('deletes an inactive conversation without touching the open one', async () =>
   await respond('/chat/sessions/latest', historyFixture)
   expect(await screen.findByText('Kept question')).toBeInTheDocument()
 
-  await confirmDialogAction(user, 'Delete First chat', 'DELETE', 'Delete conversation')
+  await user.click(screen.getAllByRole('button', { name: 'Delete First chat' })[0])
+  await user.click(
+    within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete conversation' }),
+  )
   await waitFor(() => expect(requests.some((r) => r.config.url === '/chat/sessions/ws1')).toBe(true))
   const request = requests.find((r) => r.config.url === '/chat/sessions/ws1')!
   await act(async () => request.resolve(settled(request.config, null, 204)))

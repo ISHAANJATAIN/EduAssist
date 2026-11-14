@@ -84,7 +84,8 @@ export function ConfirmDialog({
 
   if (!open) return null
 
-  const canConfirm = !confirmText || typed === confirmText
+  const canConfirm =
+    !confirmText || typed.toLowerCase() === confirmText.toLowerCase()
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#070A10]/45 p-4 backdrop-blur-sm">

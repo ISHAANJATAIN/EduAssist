@@ -180,7 +180,6 @@ export function ChatPage() {
           </>
         }
         confirmLabel="Delete conversation"
-        confirmText="DELETE"
         loading={deleting}
         onConfirm={runDelete}
         onCancel={() => setDeleteTarget(null)}
