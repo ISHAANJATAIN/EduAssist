@@ -9,7 +9,7 @@ export function AnswerMessage({ reply }: { reply: AnswerReply }) {
         {reply.grounded ? null : (
           <div className="mb-3 flex items-start gap-2 rounded-md bg-info-bg px-3 py-2 text-sm text-info-text">
             <InfoIcon size={16} className="mt-0.5 shrink-0" />
-            <p>This isn't covered in your uploaded material.</p>
+            <p>General answer, not from your uploaded material.</p>
           </div>
         )}
         <p className="whitespace-pre-wrap break-words">{reply.text}</p>

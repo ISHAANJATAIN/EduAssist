@@ -4,7 +4,9 @@ import uuid
 
 import pytest
 
+from app.core.config import get_settings
 from app.core.errors import AppError
+from app.services.ingestion.parsers import SUPPORTED_EXTENSIONS
 from app.services.ingestion.vector_store import ChunkMatch
 from app.services.rag import chain
 from app.services.safety.guardrails import ensure_citations, is_grounded
@@ -70,19 +72,106 @@ def test_ensure_citations_falls_back_to_top_chunks() -> None:
     assert [citation.page for citation in citations] == [2, 4]
 
 
-def test_ungrounded_question_skips_the_llm(monkeypatch) -> None:
+def test_ungrounded_question_answers_from_general_knowledge(monkeypatch) -> None:
     monkeypatch.setattr(chain, "retrieve", lambda *_: [_match(score=0.1)])
+    monkeypatch.setattr(
+        chain,
+        "_compose_general_answer",
+        lambda question: f"General answer to: {question}",
+    )
 
-    def fail(*_args, **_kwargs):
-        raise AssertionError("The LLM must not be called below the score gate.")
-
-    monkeypatch.setattr(chain, "get_chat_model", fail)
-
-    reply = chain.answer(uuid.uuid4(), "What is a deadlock?")
+    reply = chain.answer(uuid.uuid4(), "Who won the 2022 FIFA World Cup?")
 
     assert reply.grounded is False
     assert reply.citations == []
-    assert "couldn't find" in reply.text
+    assert reply.text == "General answer to: Who won the 2022 FIFA World Cup?"
+
+
+def test_general_answer_does_not_borrow_weak_chunk_citations(monkeypatch) -> None:
+    weak = _match(page=9, score=0.2, filename="weak.pdf")
+    monkeypatch.setattr(chain, "retrieve", lambda *_: [weak])
+    monkeypatch.setattr(
+        chain, "_compose_general_answer", lambda question: "Argentina won it."
+    )
+
+    reply = chain.answer(uuid.uuid4(), "Who won the 2022 FIFA World Cup?")
+
+    assert reply.citations == []
+
+
+def test_app_question_skips_retrieval_and_uses_the_feature_guide(monkeypatch) -> None:
+    def fail(*_args, **_kwargs):
+        raise AssertionError("App questions must not search the documents.")
+
+    monkeypatch.setattr(chain, "retrieve", fail)
+    monkeypatch.setattr(
+        chain,
+        "_compose_general_answer",
+        lambda question: "The planner builds a day-by-day study plan.",
+    )
+
+    reply = chain.answer(uuid.uuid4(), "What does the planner do in the product?")
+
+    assert reply.grounded is False
+    assert reply.citations == []
+    assert reply.text.startswith("The planner")
+
+
+@pytest.mark.parametrize(
+    ("message", "expected"),
+    [
+        ("What does the planner do in the product?", True),
+        ("What is the library for?", True),
+        ("What can you do?", True),
+        ("How do I delete my data?", True),
+        ("What is a planner in OS scheduling?", False),
+        ("Explain paging", False),
+        ("What is a deadlock?", False),
+    ],
+)
+def test_app_question_detection(message: str, expected: bool) -> None:
+    assert chain._is_app_question(message) is expected
+
+
+def test_feature_guide_matches_the_upload_rules() -> None:
+    guide = chain.GENERAL_PROMPT_PATH.read_text(encoding="utf-8")
+
+    for extension in SUPPORTED_EXTENSIONS:
+        assert extension in guide
+    assert f"{get_settings().max_upload_mb} MB" in guide
+
+
+def test_grounded_refusal_falls_back_to_a_general_answer(monkeypatch) -> None:
+    monkeypatch.setattr(chain, "retrieve", lambda *_: [_match(score=0.8)])
+    monkeypatch.setattr(
+        chain,
+        "_compose_answer",
+        lambda context, question: chain.NOT_FOUND_MARKER.capitalize() + ".",
+    )
+    monkeypatch.setattr(
+        chain, "_compose_general_answer", lambda question: "Argentina won it."
+    )
+
+    reply = chain.answer(uuid.uuid4(), "Who won the 2022 FIFA World Cup?")
+
+    assert reply.grounded is False
+    assert reply.citations == []
+    assert reply.text == "Argentina won it."
+
+
+def test_general_answer_failure_maps_to_unavailable(monkeypatch) -> None:
+    monkeypatch.setattr(chain, "retrieve", lambda *_: [])
+
+    def fail(*_args, **_kwargs):
+        raise RuntimeError("model down")
+
+    monkeypatch.setattr(chain, "_compose_general_answer", fail)
+
+    with pytest.raises(AppError) as excinfo:
+        chain.answer(uuid.uuid4(), "Who won the 2022 FIFA World Cup?")
+
+    assert excinfo.value.code == "llm_unavailable"
+    assert excinfo.value.status_code == 503
 
 
 def test_grounded_answer_builds_citations(monkeypatch) -> None:

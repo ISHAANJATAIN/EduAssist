@@ -54,11 +54,11 @@ export function ChatWindow({
               <ChatIcon size={28} />
             </div>
             <h2 className="max-w-md text-[26px] font-semibold leading-tight text-ink">
-              Ask anything from your uploaded material
+              Ask your material, or anything else
             </h2>
             <p className="mt-2 max-w-md text-sm text-neutral-500">
-              Answers are grounded in your documents and cite the page they came
-              from.
+              Answers from your documents cite the page. Other questions get a
+              general answer.
             </p>
           </div>
         ) : (

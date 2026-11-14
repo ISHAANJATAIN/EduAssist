@@ -37,16 +37,18 @@ describe('MessageRenderer', () => {
     expect(screen.getByText('Sources')).toBeInTheDocument()
     expect(screen.getByText('notes.pdf · p.2')).toBeInTheDocument()
     expect(
-      screen.queryByText("This isn't covered in your uploaded material."),
+      screen.queryByText(
+        'General answer, not from your uploaded material.',
+      ),
     ).not.toBeInTheDocument()
   })
 
-  it('shows the not-covered banner without sources', () => {
+  it('shows the general-answer banner without sources', () => {
     render(
       <MessageRenderer
         message={assistant({
           type: 'answer',
-          text: "I couldn't find this in your uploaded material.",
+          text: 'Argentina won the 2022 FIFA World Cup.',
           grounded: false,
           citations: [],
         })}
@@ -54,7 +56,10 @@ describe('MessageRenderer', () => {
     )
 
     expect(
-      screen.getByText("This isn't covered in your uploaded material."),
+      screen.getByText('Argentina won the 2022 FIFA World Cup.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('General answer, not from your uploaded material.'),
     ).toBeInTheDocument()
     expect(screen.queryByText('Sources')).not.toBeInTheDocument()
   })

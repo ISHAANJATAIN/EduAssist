@@ -72,16 +72,20 @@ def test_grounded_answer_is_saved_and_returned_in_history(
     assert rows[1]["id"] == body["message_id"]
 
 
-def test_ungrounded_question_returns_an_answer_without_citations(
+def test_ungrounded_question_returns_a_general_answer_without_citations(
     client: TestClient, monkeypatch
 ) -> None:
     headers = _auth(client, "ungrounded@bmu.edu.in")
     monkeypatch.setattr("app.services.rag.chain.retrieve", lambda *_: [])
+    monkeypatch.setattr(
+        "app.services.rag.chain._compose_general_answer",
+        lambda question: "Argentina won the 2022 FIFA World Cup.",
+    )
 
     response = client.post(
         "/api/chat",
         headers=headers,
-        json={"message": "Who won the 2018 FIFA World Cup?"},
+        json={"message": "Who won the 2022 FIFA World Cup?"},
     )
 
     assert response.status_code == 200
@@ -89,7 +93,30 @@ def test_ungrounded_question_returns_an_answer_without_citations(
     assert body["reply"]["type"] == "answer"
     assert body["reply"]["grounded"] is False
     assert body["reply"]["citations"] == []
-    assert "couldn't find" in body["reply"]["text"]
+    assert body["reply"]["text"].startswith("Argentina")
+
+
+def test_app_question_returns_the_feature_answer(
+    client: TestClient, monkeypatch
+) -> None:
+    headers = _auth(client, "app-question@bmu.edu.in")
+    monkeypatch.setattr(
+        "app.services.rag.chain._compose_general_answer",
+        lambda question: "The library stores and parses your uploaded course files.",
+    )
+
+    response = client.post(
+        "/api/chat",
+        headers=headers,
+        json={"message": "What is the library for?"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["intent"] == "rag"
+    assert body["reply"]["grounded"] is False
+    assert body["reply"]["citations"] == []
+    assert body["reply"]["text"].startswith("The library")
 
 
 def test_tracker_intent_returns_performance_and_recommendations(
