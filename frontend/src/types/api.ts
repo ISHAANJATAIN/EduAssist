@@ -695,6 +695,8 @@ export interface components {
             kind: "quiz" | "flashcards";
             /** Topic Ids */
             topic_ids?: string[];
+            /** Document Ids */
+            document_ids?: string[];
             /**
              * Difficulty
              * @default medium
@@ -728,6 +730,8 @@ export interface components {
             topic_ids: string[];
             /** Items */
             items: (components["schemas"]["QuizQuestionOut"] | components["schemas"]["FlashcardOut"])[];
+            /** Warning */
+            warning?: string | null;
         };
         /** QuizQuestionOut */
         QuizQuestionOut: {

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import lru_cache
 
@@ -78,15 +79,28 @@ def add_chunks(user_id: uuid.UUID, document, chunks: list[Chunk]) -> None:
     )
 
 
-def query(user_id: uuid.UUID, text: str, k: int | None = None) -> list[ChunkMatch]:
+def query(
+    user_id: uuid.UUID,
+    text: str,
+    k: int | None = None,
+    document_ids: Sequence[uuid.UUID] | None = None,
+) -> list[ChunkMatch]:
     collection = _collection(user_id)
     if collection.count() == 0:
         return []
+
+    where = None
+    if document_ids is not None:
+        ids = [str(document_id) for document_id in document_ids]
+        if not ids:
+            return []
+        where = {"document_id": {"$in": ids}}
 
     limit = k or get_settings().retrieval_top_k
     result = collection.query(
         query_embeddings=[get_embeddings().embed_query(text)],
         n_results=min(limit, collection.count()),
+        where=where,
         include=["documents", "metadatas", "distances"],
     )
 

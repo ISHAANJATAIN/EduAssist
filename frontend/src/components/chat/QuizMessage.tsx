@@ -35,6 +35,11 @@ export function QuizMessage({ quiz }: { quiz: QuizOut }) {
             </span>
           ))}
         </header>
+        {quiz.warning && (
+          <p className="mb-4 rounded-md border border-warning/20 bg-warning-bg px-3 py-2 text-xs text-warning-text">
+            {quiz.warning}
+          </p>
+        )}
         {quiz.kind === 'quiz' ? (
           <QuizCard quiz={quiz} />
         ) : (

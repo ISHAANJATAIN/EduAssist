@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -25,6 +25,7 @@ _HOURS = re.compile(r"\b(\d{1,2}(?:\.\d)?)\s*(?:hours?|hrs?|h)\b", re.IGNORECASE
 _KIND = re.compile(
     r"\b(quiz|test me|practice questions?|mcqs?|multiple choice)\b", re.IGNORECASE
 )
+_MODULE = re.compile(r"\bmodules?\s*#?\s*(\d{1,2})\b", re.IGNORECASE)
 _ISO_DATE = re.compile(r"\b(20\d{2})-(\d{1,2})-(\d{1,2})\b")
 _DAY_MONTH_YEAR = re.compile(r"\b(\d{1,2})[/-](\d{1,2})[/-](20\d{2})\b")
 _DAY_MONTH_NAME = re.compile(r"\b(\d{1,2})\s+([A-Za-z]{3,9})\s+(20\d{2})\b")
@@ -37,6 +38,7 @@ class Slots:
     difficulty: str | None = None
     num_items: int | None = None
     topic_ids: tuple[uuid.UUID, ...] = ()
+    modules: tuple[int, ...] = ()
     exam_date: date | None = None
     free_hours_per_day: float | None = None
 
@@ -96,11 +98,13 @@ def _rules(message: str, topics: list[Topic]) -> Slots:
         kind = None
 
     topic_ids = tuple(topic.id for topic in topics if topic.name.casefold() in text)
+    modules = tuple(sorted({int(number) for number in _MODULE.findall(message)}))
     return Slots(
         kind=kind,
         difficulty=difficulty[1].casefold() if difficulty else None,
         num_items=max(1, min(20, int(count[1]))) if count else None,
         topic_ids=topic_ids,
+        modules=modules,
         exam_date=_parse_date(message),
         free_hours_per_day=(
             max(0.0, min(24.0, float(hours[1]))) if hours else None
@@ -198,7 +202,8 @@ def extract_slots(message: str, topics: list[Topic]) -> Slots:
     if _has_signal(rules) or len(message.split()) < 4:
         return rules
     try:
-        return _llm_slots(message, topics, date.today())
+        slots = _llm_slots(message, topics, date.today())
     except Exception:
         # Slot hints only refine defaults; deterministic rules stay valid.
         return rules
+    return replace(slots, modules=rules.modules) if rules.modules else slots

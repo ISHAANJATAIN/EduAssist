@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.errors import AppError
 from app.models.chat import ChatMessage
 from app.models.course import Course
+from app.models.document import Document
 from app.models.topic import Topic
 from app.models.user import User
 from app.schemas.chat import (
@@ -20,6 +21,7 @@ from app.schemas.chat import (
 from app.schemas.planner import PlanIn
 from app.schemas.quiz import QuizCreateIn
 from app.services.agent.intent import CLARIFY, detect_intent
+from app.services.agent.scoping import match_documents
 from app.services.agent.slots import extract_slots
 from app.services.planner.csp import create_plan
 from app.services.quiz.generator import create_quiz
@@ -34,6 +36,10 @@ CLARIFY_INTENT = (
 CLARIFY_EXAM_DATE = (
     "I need your exam date before I can build a study plan. Tell me the date "
     'with your request, for example "Plan my revision for 2026-12-01".'
+)
+CLARIFY_MODULE = (
+    "I could not find that module in your library. Name one of your documents "
+    "instead, or upload the module first. Your library has: {names}."
 )
 
 
@@ -51,15 +57,34 @@ def _topics(db: Session, course: Course | None) -> list[Topic]:
     )
 
 
+def _ready_documents(db: Session, user: User) -> list[Document]:
+    return list(
+        db.scalars(
+            select(Document)
+            .where(Document.user_id == user.id, Document.status == "ready")
+            .order_by(Document.filename)
+        )
+    )
+
+
 def _quiz_reply(
     user: User, message: str, topics: list[Topic], db: Session
-) -> QuizReply:
+) -> QuizReply | ClarifyReply:
     slots = extract_slots(message, topics)
+    documents = _ready_documents(db, user)
+    scoped = match_documents(message, slots.modules, documents)
+    if slots.modules and not scoped:
+        names = ", ".join(document.filename for document in documents) or "none yet"
+        return ClarifyReply(
+            text=CLARIFY_MODULE.format(names=names), missing=["document"]
+        )
+
     payload = QuizCreateIn(
         kind=slots.kind or "quiz",
         difficulty=slots.difficulty or "medium",
         num_items=slots.num_items or 5,
         topic_ids=list(slots.topic_ids),
+        document_ids=[document.id for document in scoped],
     )
     return QuizReply(quiz=create_quiz(user, payload, db))
 

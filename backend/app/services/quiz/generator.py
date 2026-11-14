@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.errors import AppError
 from app.models.course import Course
+from app.models.document import Document
 from app.models.quiz import Quiz
 from app.models.topic import Topic
 from app.models.user import User
@@ -29,6 +30,8 @@ from app.services.llm.client import get_chat_model
 
 CHUNKS_PER_TOPIC = 3
 MAX_EXCERPTS = 40
+BATCH_SIZE = 6
+MAX_BATCH_EXCERPTS = 15
 OPTION_PREFIX = re.compile(r"^[A-Da-d][).:]\s+")
 NEGATIVE_QUESTION = re.compile(r"\b(not|except|false|incorrect)\b", re.IGNORECASE)
 
@@ -98,7 +101,11 @@ def _topic_query(topic: Topic) -> str:
     return " ".join(part for part in (topic.name, topic.description or "") if part)
 
 
-def _collect(user_id: uuid.UUID, topics: list[Topic]) -> tuple[list[Topic], list[_Excerpt]]:
+def _collect(
+    user_id: uuid.UUID,
+    topics: list[Topic],
+    document_ids: list[uuid.UUID] | None = None,
+) -> tuple[list[Topic], list[_Excerpt]]:
     active: list[Topic] = []
     excerpts: list[_Excerpt] = []
     minimum_score = get_settings().retrieval_min_score
@@ -109,7 +116,12 @@ def _collect(user_id: uuid.UUID, topics: list[Topic]) -> tuple[list[Topic], list
             break
         matches = [
             match
-            for match in query(user_id, _topic_query(topic), k=min(CHUNKS_PER_TOPIC, remaining))
+            for match in query(
+                user_id,
+                _topic_query(topic),
+                k=min(CHUNKS_PER_TOPIC, remaining),
+                document_ids=document_ids,
+            )
             if match.score >= minimum_score
         ]
         if not matches:
@@ -129,9 +141,9 @@ def _format_topics(topics: list[Topic]) -> str:
     return "\n".join(lines)
 
 
-def _format_excerpts(excerpts: list[_Excerpt]) -> str:
+def _format_excerpts(excerpts: list[_Excerpt], start: int = 1) -> str:
     blocks = []
-    for number, excerpt in enumerate(excerpts, start=1):
+    for number, excerpt in enumerate(excerpts, start=start):
         chunk = excerpt.chunk
         blocks.append(
             f"[{number}] (topic {excerpt.topic_index}) "
@@ -140,14 +152,27 @@ def _format_excerpts(excerpts: list[_Excerpt]) -> str:
     return "\n\n".join(blocks)
 
 
+def _excerpt_window(
+    excerpts: list[_Excerpt], batch_number: int, size: int
+) -> tuple[list[_Excerpt], int]:
+    start = batch_number * size
+    if not excerpts or start >= len(excerpts):
+        return excerpts, 1
+    return excerpts[start : start + size], start + 1
+
+
 def _human_message(
-    payload: QuizCreateIn, topics: list[Topic], excerpts: list[_Excerpt]
+    payload: QuizCreateIn,
+    topics: list[Topic],
+    excerpts: list[_Excerpt],
+    item_count: int | None = None,
+    excerpt_start: int = 1,
 ) -> str:
     return (
         f"Difficulty: {payload.difficulty}\n"
-        f"Item count: {payload.num_items}\n\n"
+        f"Item count: {item_count or payload.num_items}\n\n"
         f"Topics:\n{_format_topics(topics)}\n\n"
-        f"Excerpts:\n{_format_excerpts(excerpts)}"
+        f"Excerpts:\n{_format_excerpts(excerpts, excerpt_start)}"
     )
 
 
@@ -250,11 +275,18 @@ def _collect_items(raw: str, build) -> tuple[list[dict], str | None]:
     return items, last_error
 
 
+def _avoid_list(items: list[dict], label: str, limit: int = 20) -> str:
+    written = [_text(item[label], 160) for item in items[-limit:]]
+    if not written:
+        return ""
+    listing = "\n".join(f"- {item}" for item in written)
+    return f"Do not repeat or paraphrase any of these:\n{listing}"
+
+
 def _retry_message(
     human: str, last_error: str, items: list[dict], missing: int, label: str
 ) -> str:
-    written = "; ".join(_text(item[label], 200) for item in items)
-    avoid = f" Do not repeat these: {written}." if written else ""
+    avoid = f" {_avoid_list(items, label)}"
     return (
         f"{human}\n\nYour previous reply was invalid: {last_error} "
         f"Write exactly {missing} new item(s).{avoid} "
@@ -269,7 +301,6 @@ def _generate_items(
         "quiz_generation" if payload.kind == "quiz" else "flashcard_generation"
     )
     system = load_prompt(prompt_name)
-    human = _human_message(payload, topics, excerpts)
 
     if payload.kind == "quiz":
         label = "question"
@@ -286,28 +317,47 @@ def _generate_items(
     items: list[dict] = []
     seen: set[str] = set()
     last_error = "No usable items were returned."
+    batches = -(-payload.num_items // BATCH_SIZE)
+    group = min(
+        MAX_BATCH_EXCERPTS, max(1, -(-len(excerpts) // batches))
+    )
+    batch_number = 0
 
-    for attempt in range(2):
-        if attempt:
-            human = _retry_message(
-                human, last_error, items, payload.num_items - len(items), label
-            )
+    while len(items) < payload.num_items:
+        missing = min(BATCH_SIZE, payload.num_items - len(items))
+        window, excerpt_start = _excerpt_window(excerpts, batch_number, group)
+        batch_number += 1
+        human = _human_message(payload, topics, window, missing, excerpt_start)
+        avoid = _avoid_list(items, label)
+        if avoid:
+            human += f"\n\n{avoid}"
+        added = 0
 
-        raw = _invoke(system, human)
-        try:
-            batch, error = _collect_items(raw, build)
-        except ValueError as exc:
-            batch, error = [], str(exc)
+        for attempt in range(2):
+            if attempt:
+                human = _retry_message(
+                    human, last_error, items, missing - added, label
+                )
 
-        for item in batch:
-            key = _normalize(item[label])
-            if key and key not in seen:
-                seen.add(key)
-                items.append(item)
+            raw = _invoke(system, human)
+            try:
+                batch, error = _collect_items(raw, build)
+            except ValueError as exc:
+                batch, error = [], str(exc)
 
-        if len(items) >= payload.num_items:
-            return items[: payload.num_items]
-        last_error = error or "No usable items were returned."
+            for item in batch:
+                key = _normalize(item[label])
+                if key and key not in seen:
+                    seen.add(key)
+                    items.append(item)
+                    added += 1
+
+            if added >= missing:
+                break
+            last_error = error or "No usable items were returned."
+
+        if added == 0:
+            break
 
     if items:
         return items[: payload.num_items]
@@ -341,6 +391,30 @@ def _select_topics(
     )
 
 
+def _validate_documents(
+    user: User, payload: QuizCreateIn, db: Session
+) -> list[uuid.UUID]:
+    if not payload.document_ids:
+        return []
+    wanted = list(dict.fromkeys(payload.document_ids))
+    ready = set(
+        db.scalars(
+            select(Document.id).where(
+                Document.id.in_(wanted),
+                Document.user_id == user.id,
+                Document.status == "ready",
+            )
+        )
+    )
+    if ready != set(wanted):
+        raise AppError(
+            "validation_error",
+            "document_ids: every document must be yours and ready.",
+            422,
+        )
+    return wanted
+
+
 def create_quiz(user: User, payload: QuizCreateIn, db: Session) -> QuizOut:
     user_id = user.id
     db.scalar(select(User).where(User.id == user_id).with_for_update())
@@ -349,11 +423,20 @@ def create_quiz(user: User, payload: QuizCreateIn, db: Session) -> QuizOut:
     if not topics:
         raise AppError("no_material", NO_MATERIAL, 409)
 
-    active, excerpts = _collect(user.id, topics)
+    document_ids = _validate_documents(user, payload, db)
+    active, excerpts = _collect(user.id, topics, document_ids or None)
     if not active:
         raise AppError("no_material", NO_MATERIAL, 409)
 
     items = _generate_items(payload, active, excerpts)
+    warning = None
+    if len(items) < payload.num_items:
+        noun = "question" if payload.kind == "quiz" else "card"
+        plural = "" if payload.num_items == 1 else "s"
+        warning = (
+            f"I could only build {len(items)} of the {payload.num_items} requested "
+            f"{noun}{plural}. The model ran out of usable items from this material."
+        )
 
     quiz = Quiz(
         user_id=user.id,
@@ -364,7 +447,7 @@ def create_quiz(user: User, payload: QuizCreateIn, db: Session) -> QuizOut:
     )
     db.add(quiz)
     db.flush()
-    return quiz_to_out(quiz)
+    return quiz_to_out(quiz, warning)
 
 
 def _source_out(item: dict) -> SourceOut:
@@ -375,7 +458,7 @@ def _source_out(item: dict) -> SourceOut:
     )
 
 
-def quiz_to_out(quiz: Quiz) -> QuizOut:
+def quiz_to_out(quiz: Quiz, warning: str | None = None) -> QuizOut:
     items = []
     for item in quiz.items or []:
         topic_id = uuid.UUID(str(item["topic_id"]))
@@ -406,6 +489,7 @@ def quiz_to_out(quiz: Quiz) -> QuizOut:
         difficulty=quiz.difficulty,
         topic_ids=[uuid.UUID(str(value)) for value in quiz.topic_ids or []],
         items=items,
+        warning=warning,
     )
 
 

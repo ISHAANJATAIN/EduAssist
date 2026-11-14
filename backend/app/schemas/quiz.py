@@ -36,6 +36,7 @@ QuizItemOut = QuizQuestionOut | FlashcardOut
 class QuizCreateIn(BaseModel):
     kind: QuizKind = "quiz"
     topic_ids: list[uuid.UUID] = Field(default_factory=list)
+    document_ids: list[uuid.UUID] = Field(default_factory=list)
     difficulty: Difficulty = "medium"
     num_items: int = Field(default=5, ge=1, le=20)
 
@@ -46,6 +47,7 @@ class QuizOut(BaseModel):
     difficulty: Difficulty
     topic_ids: list[uuid.UUID]
     items: list[QuizItemOut]
+    warning: str | None = None
 
 
 class AnswerIn(BaseModel):

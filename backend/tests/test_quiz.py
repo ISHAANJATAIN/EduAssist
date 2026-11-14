@@ -570,7 +570,7 @@ def test_topics_without_relevant_chunks_are_not_activated(client, monkeypatch):
     _topic(client, headers, "Deadlock")
     paging = _topic(client, headers, "Paging")
     monkeypatch.setattr(get_settings(), "retrieval_min_score", 0.30)
-    monkeypatch.setattr(generator, "query", lambda user_id, text, k: [
+    monkeypatch.setattr(generator, "query", lambda user_id, text, k, document_ids=None: [
         replace(_chunk(), score=0.01 if text.startswith("Deadlock") else 0.82)
     ])
     _patch_llm(monkeypatch, [_quiz_reply([_question("What is paging?", 0)])])

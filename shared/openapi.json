@@ -1918,6 +1918,14 @@
             "type": "array",
             "title": "Topic Ids"
           },
+          "document_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Document Ids"
+          },
           "difficulty": {
             "type": "string",
             "enum": [
@@ -1984,6 +1992,17 @@
             },
             "type": "array",
             "title": "Items"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning"
           }
         },
         "type": "object",

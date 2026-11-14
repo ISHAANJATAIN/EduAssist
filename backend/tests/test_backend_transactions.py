@@ -189,7 +189,11 @@ def test_outdated_or_foreign_quiz_topics_are_rejected_before_scoring(db, invalid
 
 
 def _patch_quiz_generation(monkeypatch, topic):
-    monkeypatch.setattr(generator, "_collect", lambda user_id, topics: ([topic], []))
+    monkeypatch.setattr(
+        generator,
+        "_collect",
+        lambda user_id, topics, document_ids=None: ([topic], []),
+    )
     monkeypatch.setattr(generator, "_generate_items", lambda *args: [{
         "id": "generated", "topic_id": str(topic.id), "question": "What is A?",
         "options": ["A", "B", "C", "D"], "correct_index": 0,
