@@ -32,8 +32,15 @@ CHUNKS_PER_TOPIC = 3
 MAX_EXCERPTS = 40
 BATCH_SIZE = 6
 MAX_BATCH_EXCERPTS = 15
+ATTEMPTS_PER_BATCH = 3
 OPTION_PREFIX = re.compile(r"^[A-Da-d][).:]\s+")
 NEGATIVE_QUESTION = re.compile(r"\b(not|except|false|incorrect)\b", re.IGNORECASE)
+PROVENANCE_QUESTION = re.compile(
+    r"\b(which|what)\s+(module|unit|chapter|topic|excerpt|extract|slide|page|"
+    r"section|file|document)\b"
+    r"|\b(module|unit|chapter|extract|excerpt|slide)\s+\d+\b",
+    re.IGNORECASE,
+)
 
 LLM_ERROR = "The language model could not build the quiz right now. Please try again."
 NO_MATERIAL = (
@@ -43,7 +50,6 @@ NO_MATERIAL = (
 
 
 class _Draft(BaseModel):
-    topic_index: int | None = None
     excerpt: int | None = None
     question: str | None = None
     options: list[str] | None = None
@@ -202,6 +208,11 @@ def _build_quiz_item(
         raise ValueError(
             "Questions must be phrased positively without not, except, or false."
         )
+    if PROVENANCE_QUESTION.search(question):
+        raise ValueError(
+            "Questions must test course knowledge, never where content appears "
+            "in the material (module, chapter, excerpt, slide, page, or file)."
+        )
     if len(options) != 4 or any(not option for option in options):
         raise ValueError("Every question needs exactly four non-empty options.")
     if len(set(options)) != 4:
@@ -250,16 +261,11 @@ def _build_flashcard_item(
 def _source(
     draft: _Draft, topics: list[Topic], excerpts: list[_Excerpt]
 ) -> tuple[Topic, ChunkMatch]:
-    if draft.topic_index is None or not 1 <= draft.topic_index <= len(topics):
-        raise ValueError("topic_index is missing or out of range.")
     if draft.excerpt is None or not 1 <= draft.excerpt <= len(excerpts):
         raise ValueError("excerpt is missing or out of range.")
 
     excerpt = excerpts[draft.excerpt - 1]
-    if excerpt.topic_index != draft.topic_index:
-        raise ValueError("The excerpt does not belong to the stated topic.")
-
-    return topics[draft.topic_index - 1], excerpt.chunk
+    return topics[excerpt.topic_index - 1], excerpt.chunk
 
 
 def _collect_items(raw: str, build) -> tuple[list[dict], str | None]:
@@ -294,6 +300,52 @@ def _retry_message(
     )
 
 
+def _run_round(
+    system: str,
+    build,
+    label: str,
+    payload: QuizCreateIn,
+    topics: list[Topic],
+    window: list[_Excerpt],
+    excerpt_start: int,
+    requested: int,
+    attempts: int,
+    items: list[dict],
+    seen: set[str],
+) -> int:
+    human = _human_message(payload, topics, window, requested, excerpt_start)
+    avoid = _avoid_list(items, label)
+    if avoid:
+        human += f"\n\n{avoid}"
+    added = 0
+    last_error = "No usable items were returned."
+
+    for attempt in range(attempts):
+        if attempt:
+            human = _retry_message(
+                human, last_error, items, requested - added, label
+            )
+
+        raw = _invoke(system, human)
+        try:
+            batch, error = _collect_items(raw, build)
+        except ValueError as exc:
+            batch, error = [], str(exc)
+
+        for item in batch:
+            key = _normalize(item[label])
+            if key and key not in seen:
+                seen.add(key)
+                items.append(item)
+                added += 1
+
+        if added >= requested:
+            break
+        last_error = error or "No usable items were returned."
+
+    return added
+
+
 def _generate_items(
     payload: QuizCreateIn, topics: list[Topic], excerpts: list[_Excerpt]
 ) -> list[dict]:
@@ -316,7 +368,6 @@ def _generate_items(
 
     items: list[dict] = []
     seen: set[str] = set()
-    last_error = "No usable items were returned."
     batches = -(-payload.num_items // BATCH_SIZE)
     group = min(
         MAX_BATCH_EXCERPTS, max(1, -(-len(excerpts) // batches))
@@ -324,40 +375,45 @@ def _generate_items(
     batch_number = 0
 
     while len(items) < payload.num_items:
-        missing = min(BATCH_SIZE, payload.num_items - len(items))
+        shortfall = payload.num_items - len(items)
+        requested = (
+            BATCH_SIZE if payload.num_items >= BATCH_SIZE else shortfall
+        )
         window, excerpt_start = _excerpt_window(excerpts, batch_number, group)
         batch_number += 1
-        human = _human_message(payload, topics, window, missing, excerpt_start)
-        avoid = _avoid_list(items, label)
-        if avoid:
-            human += f"\n\n{avoid}"
-        added = 0
-
-        for attempt in range(2):
-            if attempt:
-                human = _retry_message(
-                    human, last_error, items, missing - added, label
-                )
-
-            raw = _invoke(system, human)
-            try:
-                batch, error = _collect_items(raw, build)
-            except ValueError as exc:
-                batch, error = [], str(exc)
-
-            for item in batch:
-                key = _normalize(item[label])
-                if key and key not in seen:
-                    seen.add(key)
-                    items.append(item)
-                    added += 1
-
-            if added >= missing:
-                break
-            last_error = error or "No usable items were returned."
-
+        added = _run_round(
+            system,
+            build,
+            label,
+            payload,
+            topics,
+            window,
+            excerpt_start,
+            requested,
+            ATTEMPTS_PER_BATCH,
+            items,
+            seen,
+        )
         if added == 0:
             break
+
+    for position in range(len(excerpts)):
+        if len(items) >= payload.num_items:
+            break
+        window, excerpt_start = _excerpt_window(excerpts, position, 1)
+        _run_round(
+            system,
+            build,
+            label,
+            payload,
+            topics,
+            window,
+            excerpt_start,
+            2,
+            2,
+            items,
+            seen,
+        )
 
     if items:
         return items[: payload.num_items]

@@ -75,6 +75,123 @@ def test_quiz_generates_in_batches_until_requested_count(client: TestClient, mon
     assert model.calls == 4
 
 
+def test_duplicate_replies_are_retried_until_the_count_is_met(
+    client: TestClient, monkeypatch
+) -> None:
+    headers = _auth(client, "retrydup@bmu.edu.in")
+    _topic(client, headers)
+    model = _patch_llm(
+        monkeypatch,
+        [_batch(0), _batch(6), _batch(12), _batch(0), _batch(0), _batch(18)],
+    )
+    _patch_chunks(monkeypatch)
+
+    response = client.post(
+        "/api/quizzes",
+        headers=headers,
+        json={"kind": "quiz", "num_items": 20},
+    )
+
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert len(body["items"]) == 20
+    assert body["warning"] is None
+    assert model.calls == 6
+
+
+def test_top_up_pass_finishes_the_count_after_a_stalled_batch(
+    client: TestClient, monkeypatch
+) -> None:
+    headers = _auth(client, "topup@bmu.edu.in")
+    _topic(client, headers)
+    model = _patch_llm(
+        monkeypatch,
+        [
+            _batch(0),
+            _batch(6),
+            _batch(12),
+            _batch(0),
+            _batch(0),
+            _batch(0),
+            _quiz_reply(
+                [
+                    _question("What does mutual exclusion protect?", 0),
+                    _question("What condition prevents circular wait?", 1),
+                ]
+            ),
+        ],
+    )
+    _patch_chunks(monkeypatch)
+
+    response = client.post(
+        "/api/quizzes",
+        headers=headers,
+        json={"kind": "quiz", "num_items": 20},
+    )
+
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert len(body["items"]) == 20
+    assert body["warning"] is None
+    assert model.calls == 7
+
+
+def test_mislabeled_topic_index_does_not_discard_the_item(
+    client: TestClient, monkeypatch
+) -> None:
+    headers = _auth(client, "mislabel@bmu.edu.in")
+    deadlock = _topic(client, headers, "Deadlock")
+    _topic(client, headers, "Scheduling")
+    model = _patch_llm(
+        monkeypatch,
+        [
+            _quiz_reply(
+                [_question("What does deadlock require?", 1, topic_index=2, excerpt=1)]
+            )
+        ],
+    )
+    _patch_chunks(monkeypatch)
+
+    response = client.post(
+        "/api/quizzes",
+        headers=headers,
+        json={"kind": "quiz", "num_items": 1},
+    )
+
+    assert response.status_code == 201, response.text
+    assert response.json()["items"][0]["topic_id"] == deadlock
+    assert model.calls == 1
+
+
+def test_provenance_question_is_rejected_and_replaced(
+    client: TestClient, monkeypatch
+) -> None:
+    headers = _auth(client, "provenance@bmu.edu.in")
+    _topic(client, headers)
+    model = _patch_llm(
+        monkeypatch,
+        [
+            _quiz_reply([_question("Which module contains the deadlock conditions?", 0)]),
+            _quiz_reply(
+                [_question("Which conditions are required for a deadlock?", 0)]
+            ),
+        ],
+    )
+    _patch_chunks(monkeypatch)
+
+    response = client.post(
+        "/api/quizzes",
+        headers=headers,
+        json={"kind": "quiz", "num_items": 1},
+    )
+
+    assert response.status_code == 201, response.text
+    assert response.json()["items"][0]["question"] == (
+        "Which conditions are required for a deadlock?"
+    )
+    assert model.calls == 2
+
+
 def test_short_generation_returns_honest_warning(client: TestClient, monkeypatch) -> None:
     headers = _auth(client)
     _topic(client, headers)

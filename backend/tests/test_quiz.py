@@ -243,7 +243,7 @@ def test_invalid_model_output_returns_unavailable(
 
     assert response.status_code == 503
     assert response.json()["code"] == "llm_unavailable"
-    assert model.calls == 2
+    assert model.calls == 5
 
 
 def test_invalid_output_is_repaired_once(
