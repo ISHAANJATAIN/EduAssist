@@ -8,6 +8,8 @@ interface ConversationListProps {
   onSelect: (sessionId: string) => void
   onNewChat: () => void
   onClear: () => void
+  onDelete: (sessionId: string) => void
+  onDeleteAll: () => void
   canClear: boolean
 }
 
@@ -30,6 +32,8 @@ export function ConversationList({
   onSelect,
   onNewChat,
   onClear,
+  onDelete,
+  onDeleteAll,
   canClear,
 }: ConversationListProps) {
   return (
@@ -55,29 +59,47 @@ export function ConversationList({
           <ul className="space-y-1">
             {sessions.map((session) => {
               const active = session.id === activeId
+              const title = session.title ?? 'New conversation'
               return (
                 <li key={session.id}>
-                  <button
-                    type="button"
-                    onClick={() => onSelect(session.id)}
-                    aria-current={active ? 'true' : undefined}
-                    className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm transition duration-200 ${
-                      active
-                        ? 'bg-action font-semibold text-on-action'
-                        : 'text-neutral-700 hover:bg-ink/5 hover:text-ink'
+                  <div
+                    className={`group flex items-center gap-1 rounded-xl pr-1 transition duration-200 ${
+                      active ? 'bg-action' : 'hover:bg-ink/5'
                     }`}
                   >
-                    <span className="truncate">
-                      {session.title ?? 'New conversation'}
-                    </span>
-                    <span
-                      className={`shrink-0 text-[11px] ${
-                        active ? 'text-on-action/70' : 'text-neutral-500'
+                    <button
+                      type="button"
+                      onClick={() => onSelect(session.id)}
+                      aria-current={active ? 'true' : undefined}
+                      className={`flex min-w-0 flex-1 items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm transition duration-200 ${
+                        active
+                          ? 'font-semibold text-on-action'
+                          : 'text-neutral-700 group-hover:text-ink'
                       }`}
                     >
-                      {formatWhen(session.updated_at)}
-                    </span>
-                  </button>
+                      <span className="truncate">{title}</span>
+                      <span
+                        className={`shrink-0 text-[11px] ${
+                          active ? 'text-on-action/70' : 'text-neutral-500'
+                        }`}
+                      >
+                        {formatWhen(session.updated_at)}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(session.id)}
+                      aria-label={`Delete ${title}`}
+                      title={`Delete ${title}`}
+                      className={`shrink-0 rounded-lg p-1.5 transition duration-200 focus-visible:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100 ${
+                        active
+                          ? 'text-on-action/70 opacity-100 hover:bg-white/15 hover:text-on-action'
+                          : 'text-neutral-400 opacity-0 hover:bg-danger/10 hover:text-danger'
+                      }`}
+                    >
+                      <TrashIcon size={15} />
+                    </button>
+                  </div>
                 </li>
               )
             })}
@@ -85,15 +107,26 @@ export function ConversationList({
         )}
       </div>
 
-      <Button
-        variant="ghost"
-        onClick={onClear}
-        disabled={!canClear}
-        className="mt-3 w-full justify-center"
-      >
-        <TrashIcon size={16} />
-        Clear chat
-      </Button>
+      <div className="mt-3 space-y-1">
+        <Button
+          variant="ghost"
+          onClick={onClear}
+          disabled={!canClear}
+          className="w-full justify-center"
+        >
+          <TrashIcon size={16} />
+          Clear chat
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={onDeleteAll}
+          disabled={sessions.length === 0}
+          className="w-full justify-center text-danger hover:bg-danger/10 hover:text-danger"
+        >
+          <TrashIcon size={16} />
+          Delete all chats
+        </Button>
+      </div>
     </aside>
   )
 }

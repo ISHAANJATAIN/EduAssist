@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import uuid
+
 from fastapi.testclient import TestClient
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.db.init_db import backfill_chat_sessions
 from app.db.session import SessionLocal
@@ -165,6 +167,15 @@ def test_sessions_are_private(client: TestClient, monkeypatch) -> None:
         ).status_code
         == 404
     )
+    assert (
+        client.delete(f"/api/chat/sessions/{session_id}", headers=stranger).status_code
+        == 404
+    )
+    assert client.delete("/api/chat/sessions", headers=stranger).status_code == 204
+    assert [
+        session["id"]
+        for session in client.get("/api/chat/sessions", headers=owner).json()
+    ] == [session_id]
     assert _send(client, stranger, "Hijack", session_id).status_code == 404
 
 
@@ -197,6 +208,104 @@ def test_clear_removes_only_that_sessions_messages(
         first["session_id"],
         created["id"],
     }
+
+
+def test_delete_one_session_removes_only_that_conversation(
+    client: TestClient, monkeypatch
+) -> None:
+    headers = _auth(client)
+    _stub_answer(monkeypatch)
+    first = _send(client, headers, "First conversation").json()
+    created = client.post("/api/chat/sessions", headers=headers).json()
+    _send(client, headers, "Second conversation", created["id"])
+
+    deleted = client.delete(
+        f"/api/chat/sessions/{first['session_id']}", headers=headers
+    )
+
+    assert deleted.status_code == 204
+    assert (
+        client.get(
+            f"/api/chat/sessions/{first['session_id']}/messages", headers=headers
+        ).status_code
+        == 404
+    )
+    sessions = client.get("/api/chat/sessions", headers=headers).json()
+    assert [session["id"] for session in sessions] == [created["id"]]
+    kept = client.get(
+        f"/api/chat/sessions/{created['id']}/messages", headers=headers
+    ).json()
+    assert len(kept) == 2
+    with SessionLocal() as db:
+        orphaned = db.scalar(
+            select(func.count())
+            .select_from(ChatMessage)
+            .where(ChatMessage.session_id == uuid.UUID(first["session_id"]))
+        )
+        assert orphaned == 0
+
+
+def test_delete_all_sessions_removes_your_conversations_only(
+    client: TestClient, monkeypatch
+) -> None:
+    owner = _auth(client, "owner-all@bmu.edu.in")
+    friend = _auth(client, "friend-all@bmu.edu.in")
+    _stub_answer(monkeypatch)
+    _send(client, owner, "Owner chat one")
+    _send(client, owner, "Owner chat two")
+    friend_chat = _send(client, friend, "Friend chat").json()
+
+    assert client.delete("/api/chat/sessions", headers=owner).status_code == 204
+
+    assert client.get("/api/chat/sessions", headers=owner).json() == []
+    assert client.get("/api/chat/sessions/latest", headers=owner).json() == {
+        "session": None,
+        "messages": [],
+    }
+    with SessionLocal() as db:
+        owner_row = db.scalar(
+            select(User).where(User.email == "owner-all@bmu.edu.in")
+        )
+        friend_row = db.scalar(
+            select(User).where(User.email == "friend-all@bmu.edu.in")
+        )
+        assert owner_row is not None
+        assert friend_row is not None
+        assert (
+            db.scalar(
+                select(func.count())
+                .select_from(ChatSession)
+                .where(ChatSession.user_id == owner_row.id)
+            )
+            == 0
+        )
+        assert (
+            db.scalar(
+                select(func.count())
+                .select_from(ChatMessage)
+                .where(ChatMessage.user_id == owner_row.id)
+            )
+            == 0
+        )
+        assert (
+            db.scalar(
+                select(func.count())
+                .select_from(ChatMessage)
+                .where(ChatMessage.user_id == friend_row.id)
+            )
+            == 2
+        )
+    kept = client.get(
+        f"/api/chat/sessions/{friend_chat['session_id']}/messages", headers=friend
+    ).json()
+    assert len(kept) == 2
+
+
+def test_deleting_conversations_requires_authentication(client: TestClient) -> None:
+    assert client.delete("/api/chat/sessions").status_code == 401
+    assert (
+        client.delete(f"/api/chat/sessions/{uuid.uuid4()}").status_code == 401
+    )
 
 
 def test_legacy_messages_are_grouped_into_one_session(client: TestClient) -> None:

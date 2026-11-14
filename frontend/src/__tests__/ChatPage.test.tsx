@@ -127,3 +127,108 @@ it('clears the active conversation only after typing CLEAR to confirm', async ()
   expect(await screen.findByText('Ask your material, or anything else')).toBeInTheDocument()
   expect(screen.getAllByText('First chat').length).toBeGreaterThan(0)
 })
+
+const sessionsFixture = [
+  { id: 'ws1', title: 'First chat', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' },
+  { id: 'ws2', title: 'Second chat', created_at: '2026-01-02T00:00:00Z', updated_at: '2026-01-02T00:00:00Z' },
+]
+
+const historyFixture = {
+  session: sessionsFixture[1],
+  messages: [
+    { id: 'm1', role: 'user', created_at: '2026-01-02T00:00:00Z', text: 'Kept question', reply: null },
+    { id: 'm2', role: 'assistant', created_at: '2026-01-02T00:00:01Z', text: null, reply: { type: 'clarify', text: 'Kept answer', missing: [] } },
+  ],
+}
+
+async function confirmDialogAction(
+  user: ReturnType<typeof userEvent.setup>,
+  openLabel: string,
+  typed: string,
+  confirmLabel: string,
+) {
+  await user.click(screen.getAllByRole('button', { name: openLabel })[0])
+  const dialog = screen.getByRole('dialog')
+  await user.type(within(dialog).getByLabelText(`Type ${typed} to confirm`), typed)
+  await user.click(within(dialog).getByRole('button', { name: confirmLabel }))
+  return dialog
+}
+
+it('deletes the open conversation and leaves you on a fresh chat', async () => {
+  const user = userEvent.setup()
+  sessionsData = sessionsFixture
+  render(<QueryClientProvider client={client}><ChatPage /></QueryClientProvider>)
+  await respond('/chat/sessions/latest', {
+    session: sessionsFixture[0],
+    messages: [
+      { id: 'm0', role: 'user', created_at: '2026-01-01T00:00:00Z', text: 'Deletable question', reply: null },
+    ],
+  })
+  expect(await screen.findByText('Deletable question')).toBeInTheDocument()
+
+  const dialog = await confirmDialogAction(user, 'Delete First chat', 'DELETE', 'Delete conversation')
+
+  await waitFor(() => expect(requests.some((r) => r.config.url === '/chat/sessions/ws1' && r.config.method === 'delete')).toBe(true))
+  const request = requests.find((r) => r.config.url === '/chat/sessions/ws1')!
+  await act(async () => request.resolve(settled(request.config, null, 204)))
+
+  expect(await screen.findByText('Ask your material, or anything else')).toBeInTheDocument()
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(screen.queryByText('First chat')).not.toBeInTheDocument()
+  expect(screen.getAllByText('Second chat').length).toBeGreaterThan(0)
+  expect(dialog).not.toBeInTheDocument()
+})
+
+it('deletes an inactive conversation without touching the open one', async () => {
+  const user = userEvent.setup()
+  sessionsData = sessionsFixture
+  render(<QueryClientProvider client={client}><ChatPage /></QueryClientProvider>)
+  await respond('/chat/sessions/latest', historyFixture)
+  expect(await screen.findByText('Kept question')).toBeInTheDocument()
+
+  await confirmDialogAction(user, 'Delete First chat', 'DELETE', 'Delete conversation')
+  await waitFor(() => expect(requests.some((r) => r.config.url === '/chat/sessions/ws1')).toBe(true))
+  const request = requests.find((r) => r.config.url === '/chat/sessions/ws1')!
+  await act(async () => request.resolve(settled(request.config, null, 204)))
+
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  expect(screen.getByText('Kept question')).toBeInTheDocument()
+  expect(screen.queryByText('First chat')).not.toBeInTheDocument()
+  expect(screen.getAllByText('Second chat').length).toBeGreaterThan(0)
+})
+
+it('deletes every conversation after typing DELETE ALL', async () => {
+  const user = userEvent.setup()
+  sessionsData = sessionsFixture
+  render(<QueryClientProvider client={client}><ChatPage /></QueryClientProvider>)
+  await respond('/chat/sessions/latest', historyFixture)
+  expect(await screen.findByText('Kept question')).toBeInTheDocument()
+
+  const dialog = await confirmDialogAction(user, 'Delete all chats', 'DELETE ALL', 'Delete all chats')
+
+  await waitFor(() => expect(requests.some((r) => r.config.url === '/chat/sessions' && r.config.method === 'delete')).toBe(true))
+  const request = requests.find((r) => r.config.url === '/chat/sessions')!
+  await act(async () => request.resolve(settled(request.config, null, 204)))
+
+  expect(await screen.findByText('No conversations yet. Send a message to start one.')).toBeInTheDocument()
+  expect(screen.getByText('Ask your material, or anything else')).toBeInTheDocument()
+  expect(screen.queryByText('Kept question')).not.toBeInTheDocument()
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(dialog).not.toBeInTheDocument()
+})
+
+it('cancelling keeps the conversation and sends no request', async () => {
+  const user = userEvent.setup()
+  sessionsData = sessionsFixture
+  render(<QueryClientProvider client={client}><ChatPage /></QueryClientProvider>)
+  await respond('/chat/sessions/latest', historyFixture)
+  expect(await screen.findByText('Kept question')).toBeInTheDocument()
+
+  await user.click(screen.getAllByRole('button', { name: 'Delete First chat' })[0])
+  await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }))
+
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  expect(requests.some((r) => r.config.method === 'delete')).toBe(false)
+  expect(screen.getAllByText('First chat').length).toBeGreaterThan(0)
+  expect(screen.getByText('Kept question')).toBeInTheDocument()
+})

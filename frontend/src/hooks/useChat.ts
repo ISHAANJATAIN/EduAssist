@@ -4,12 +4,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { normalizeError } from '@/api/client'
 import {
   clearSession,
+  deleteAllSessions,
+  deleteSession,
   latest as fetchLatest,
   send as sendMessage,
   sessionMessages,
   sessions as fetchSessions,
   type ChatIntent,
   type ChatSession,
+  type ChatSessionLatest,
 } from '@/api/chat'
 import { planKey } from '@/hooks/usePlan'
 import { captureSessionGeneration, isCurrentSession, useAuthStore } from '@/store/authStore'
@@ -136,6 +139,34 @@ export function useChat() {
     },
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: (sessionId: string) => deleteSession(sessionId),
+    onSuccess: (_, sessionId) => {
+      if (!isCurrentSession(generation)) return
+      const store = useChatStore.getState()
+      const wasActive = store.session?.id === sessionId
+      store.removeSession(sessionId)
+      if (wasActive) {
+        queryClient.setQueryData<ChatSessionLatest>([...chatLatestKey, generation], {
+          session: null,
+          messages: [],
+        })
+      }
+    },
+  })
+
+  const deleteAllMutation = useMutation({
+    mutationFn: () => deleteAllSessions(),
+    onSuccess: () => {
+      if (!isCurrentSession(generation)) return
+      useChatStore.getState().clearSessions()
+      queryClient.setQueryData<ChatSessionLatest>([...chatLatestKey, generation], {
+        session: null,
+        messages: [],
+      })
+    },
+  })
+
   const openSession = async (sessionId: string) => {
     if (!isCurrentSession(generation)) return
     const target = useChatStore.getState().sessions.find((item) => item.id === sessionId)
@@ -160,6 +191,16 @@ export function useChat() {
     clearMutation.mutate(sessionId)
   }
 
+  const deleteChat = (sessionId: string) => {
+    if (!isCurrentSession(generation)) return Promise.resolve()
+    return deleteMutation.mutateAsync(sessionId)
+  }
+
+  const deleteAllChats = () => {
+    if (!isCurrentSession(generation)) return Promise.resolve()
+    return deleteAllMutation.mutateAsync()
+  }
+
   return {
     messages,
     sessions,
@@ -174,6 +215,16 @@ export function useChat() {
     newChat,
     clearChat,
     clearing: clearMutation.isPending,
+    deleteChat,
+    deleteAllChats,
+    deleting: deleteMutation.isPending,
+    deletingAll: deleteAllMutation.isPending,
+    deleteError: deleteMutation.error,
+    deleteAllError: deleteAllMutation.error,
+    resetDelete: () => {
+      deleteMutation.reset()
+      deleteAllMutation.reset()
+    },
     historyLoading: Boolean(token) && !hydrated && latestQuery.isFetching,
     historyError: latestQuery.error,
     retryHistory: () => {

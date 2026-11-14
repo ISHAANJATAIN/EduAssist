@@ -133,6 +133,31 @@ def session_messages(
 
 
 @router.delete(
+    "/sessions/{session_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
+)
+def delete_session(
+    session_id: uuid.UUID, db: DbSession, user: CurrentUser
+) -> None:
+    session = _own_session(db, user, session_id)
+    db.execute(delete(ChatMessage).where(ChatMessage.session_id == session.id))
+    db.execute(delete(ChatSession).where(ChatSession.id == session.id))
+    db.commit()
+
+
+@router.delete(
+    "/sessions",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
+)
+def delete_all_sessions(db: DbSession, user: CurrentUser) -> None:
+    db.execute(delete(ChatMessage).where(ChatMessage.user_id == user.id))
+    db.execute(delete(ChatSession).where(ChatSession.user_id == user.id))
+    db.commit()
+
+
+@router.delete(
     "/sessions/{session_id}/messages",
     status_code=status.HTTP_204_NO_CONTENT,
     response_model=None,

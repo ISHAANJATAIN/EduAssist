@@ -23,6 +23,8 @@ interface ChatState {
   setSessions: (sessions: ChatSession[]) => void
   beginNewChat: () => void
   clearMessages: () => void
+  removeSession: (sessionId: string) => void
+  clearSessions: () => void
   appendUser: (text: string) => void
   appendAssistant: (message: ChatOut) => void
   setPending: (pending: boolean) => void
@@ -65,6 +67,30 @@ export const useChatStore = create<ChatState>()((set) => ({
     }),
 
   clearMessages: () => set({ messages: [], error: null }),
+
+  removeSession: (sessionId) =>
+    set((state) => {
+      const sessions = state.sessions.filter((item) => item.id !== sessionId)
+      if (state.session?.id !== sessionId) return { sessions }
+      return {
+        sessions,
+        messages: [],
+        session: null,
+        pending: false,
+        error: null,
+        hydrated: true,
+      }
+    }),
+
+  clearSessions: () =>
+    set({
+      messages: [],
+      session: null,
+      sessions: [],
+      pending: false,
+      error: null,
+      hydrated: true,
+    }),
 
   appendUser: (text) =>
     set((state) => ({

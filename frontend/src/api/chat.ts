@@ -51,3 +51,11 @@ export async function sessionMessages(sessionId: string): Promise<ChatMessage[]>
 export async function clearSession(sessionId: string): Promise<void> {
   await api.delete(`/chat/sessions/${sessionId}/messages`)
 }
+
+export async function deleteSession(sessionId: string): Promise<void> {
+  await api.delete(`/chat/sessions/${sessionId}`)
+}
+
+export async function deleteAllSessions(): Promise<void> {
+  await api.delete('/chat/sessions')
+}

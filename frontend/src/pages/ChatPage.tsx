@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import type { ChatSession } from '@/api/chat'
 import { ConversationList } from '@/components/chat/ConversationList'
 import { ChatWindow } from '@/components/chat/ChatWindow'
 import { MessageInput } from '@/components/chat/MessageInput'
@@ -23,13 +24,49 @@ export function ChatPage() {
     newChat,
     clearChat,
     clearing,
+    deleteChat,
+    deleteAllChats,
+    deleting,
+    deletingAll,
+    deleteError,
+    deleteAllError,
+    resetDelete,
     historyLoading,
     historyError,
     retryHistory,
   } = useChat()
   const [confirmClear, setConfirmClear] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<ChatSession | null>(null)
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
 
   const canClear = Boolean(session) && messages.length > 0
+
+  const openDelete = (sessionId: string) => {
+    const target = sessions.find((item) => item.id === sessionId)
+    if (!target) return
+    resetDelete()
+    setDeleteTarget(target)
+  }
+
+  const openDeleteAll = () => {
+    resetDelete()
+    setConfirmDeleteAll(true)
+  }
+
+  const runDelete = () => {
+    if (!deleteTarget) return
+    void deleteChat(deleteTarget.id).then(
+      () => setDeleteTarget(null),
+      () => {},
+    )
+  }
+
+  const runDeleteAll = () => {
+    void deleteAllChats().then(
+      () => setConfirmDeleteAll(false),
+      () => {},
+    )
+  }
 
   return (
     <section className="mx-auto flex h-[calc(100dvh-7rem)] w-full max-w-content gap-4">
@@ -39,6 +76,8 @@ export function ChatPage() {
         onSelect={(sessionId) => void openSession(sessionId)}
         onNewChat={newChat}
         onClear={() => setConfirmClear(true)}
+        onDelete={openDelete}
+        onDeleteAll={openDeleteAll}
         canClear={canClear}
       />
 
@@ -68,14 +107,28 @@ export function ChatPage() {
           </select>
           <Button
             variant="ghost"
-            onClick={() => setConfirmClear(true)}
-            disabled={!canClear}
-            aria-label="Clear chat"
-            className="shrink-0 px-3"
+            onClick={() => {
+              if (session) openDelete(session.id)
+            }}
+            disabled={!session}
+            aria-label="Delete this chat"
+            className="shrink-0 px-3 text-danger hover:bg-danger/10 hover:text-danger"
           >
             <TrashIcon size={18} />
           </Button>
         </div>
+        {sessions.length > 0 ? (
+          <div className="flex justify-end lg:hidden">
+            <Button
+              variant="ghost"
+              onClick={openDeleteAll}
+              className="h-8 px-3 text-xs text-danger hover:bg-danger/10 hover:text-danger"
+            >
+              <TrashIcon size={14} />
+              Delete all chats
+            </Button>
+          </div>
+        ) : null}
 
         {historyLoading ? (
           <p role="status" className="text-sm text-neutral-600">
@@ -106,6 +159,54 @@ export function ChatPage() {
           setConfirmClear(false)
         }}
         onCancel={() => setConfirmClear(false)}
+      />
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete this conversation?"
+        description={
+          <>
+            <p>
+              This removes{' '}
+              <strong>{deleteTarget?.title ?? 'this conversation'}</strong> and
+              every message in it. Your other conversations stay.{' '}
+              <strong>This cannot be undone.</strong>
+            </p>
+            {deleteError ? (
+              <div className="mt-3">
+                <ErrorBanner error={deleteError} />
+              </div>
+            ) : null}
+          </>
+        }
+        confirmLabel="Delete conversation"
+        confirmText="DELETE"
+        loading={deleting}
+        onConfirm={runDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmDeleteAll}
+        title="Delete all conversations?"
+        description={
+          <>
+            <p>
+              This removes every conversation and every message in your chat
+              history. <strong>This cannot be undone.</strong>
+            </p>
+            {deleteAllError ? (
+              <div className="mt-3">
+                <ErrorBanner error={deleteAllError} />
+              </div>
+            ) : null}
+          </>
+        }
+        confirmLabel="Delete all chats"
+        confirmText="DELETE ALL"
+        loading={deletingAll}
+        onConfirm={runDeleteAll}
+        onCancel={() => setConfirmDeleteAll(false)}
       />
     </section>
   )
