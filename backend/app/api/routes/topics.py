@@ -163,39 +163,50 @@ def delete_topic(topic_id: uuid.UUID, db: DbSession, user: CurrentUser) -> None:
     db.commit()
 
 
+MATERIAL_PRIORITY = {
+    "handout": 0,
+    "notes": 1,
+    "textbook": 2,
+    "lecture": 3,
+    "slides": 4,
+}
+
+
 @router.post("/extract", response_model=list[TopicOut])
 def extract_from_handouts(db: DbSession, user: CurrentUser) -> list[TopicOut]:
     course = _locked_course(db, user)
-    handouts = db.scalars(
-        select(Document).where(
-            Document.user_id == user.id,
-            Document.doc_type == "handout",
-            Document.status == "ready",
-        )
-    ).all()
+    documents = list(
+        db.scalars(
+            select(Document)
+            .where(Document.user_id == user.id, Document.status == "ready")
+            .order_by(Document.uploaded_at)
+        ).all()
+    )
+    # A syllabus gives the cleanest topic list, so handouts are read first.
+    documents.sort(key=lambda document: MATERIAL_PRIORITY.get(document.doc_type, 5))
 
-    if not handouts:
+    if not documents:
         raise AppError(
             "no_material",
-            "Upload a handout and wait for it to finish processing first.",
+            "Upload study material and wait for it to finish processing first.",
             409,
         )
 
     texts: list[str] = []
-    for handout in handouts:
+    for document in documents:
         try:
             pages = parse_document(
-                document_path(handout.user_id, handout.id, handout.filename)
+                document_path(document.user_id, document.id, document.filename)
             )
         except Exception:
-            logger.warning("Could not read handout %s", handout.id, exc_info=True)
+            logger.warning("Could not read document %s", document.id, exc_info=True)
             continue
         texts.append("\n".join(page.text for page in pages))
 
     if not texts:
         raise AppError(
             "no_material",
-            "The uploaded handouts have no extractable text.",
+            "The uploaded material has no extractable text.",
             409,
         )
 

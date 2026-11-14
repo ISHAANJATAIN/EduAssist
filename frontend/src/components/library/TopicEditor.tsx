@@ -232,8 +232,7 @@ export function TopicEditor() {
 
       {topics.data && topics.data.length === 0 ? (
         <p className="mt-5 rounded-md border border-dashed border-neutral-300 px-4 py-6 text-center text-sm text-neutral-500">
-          No topics yet. Add one, or upload a handout and extract topics
-          automatically.
+          No topics yet. Add one, or extract topics from your uploaded material.
         </p>
       ) : null}
 

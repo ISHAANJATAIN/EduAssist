@@ -638,13 +638,47 @@ def test_topic_names_are_unique_case_insensitively(client):
     assert same.status_code == 200
 
 
-def test_extract_topics_requires_ready_handout(client):
+def test_extract_topics_requires_ready_material(client):
     headers, _ = _auth(client, "extract@bmu.edu.in")
 
     response = client.post("/api/topics/extract", headers=headers)
 
     assert response.status_code == 409
     assert response.json()["code"] == "no_material"
+
+
+def test_extract_topics_ignores_material_still_processing(
+    client, no_ingest, temp_uploads, monkeypatch
+):
+    headers, _ = _auth(client, "extract-processing@bmu.edu.in")
+    _upload(client, headers, name="module1.pptx", doc_type="slides")
+
+    response = client.post("/api/topics/extract", headers=headers)
+
+    assert response.status_code == 409
+    assert response.json()["code"] == "no_material"
+
+
+def test_extract_topics_from_ready_slides(client, no_ingest, temp_uploads, monkeypatch):
+    headers, _ = _auth(client, "extract-slides@bmu.edu.in")
+    document_id = uuid.UUID(
+        _upload(client, headers, name="module1-slides.txt", doc_type="slides").json()["id"]
+    )
+    with SessionLocal() as db:
+        document = db.get(Document, document_id)
+        document.status = "ready"
+        db.commit()
+
+    monkeypatch.setattr(
+        topics_route,
+        "extract_topics",
+        lambda text: [TopicDraft(name="Pipelining", description="Instruction pipelining.")],
+    )
+
+    response = client.post("/api/topics/extract", headers=headers)
+
+    assert response.status_code == 200
+    assert [topic["name"] for topic in response.json()] == ["Pipelining"]
 
 
 def test_extract_topics_from_ready_handout(
