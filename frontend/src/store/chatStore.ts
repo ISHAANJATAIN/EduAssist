@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 import type { ApiError } from '@/api/client'
-import type { ChatMessage, ChatOut, ChatReply } from '@/api/chat'
+import type { ChatMessage, ChatOut, ChatReply, ChatSession } from '@/api/chat'
 
 export interface ChatItem {
   id: string
@@ -13,10 +13,16 @@ export interface ChatItem {
 
 interface ChatState {
   messages: ChatItem[]
+  session: ChatSession | null
+  sessions: ChatSession[]
   pending: boolean
   error: ApiError | null
   hydrated: boolean
-  setHistory: (messages: ChatMessage[]) => void
+  hydrate: (session: ChatSession | null, messages: ChatMessage[]) => void
+  setSession: (session: ChatSession) => void
+  setSessions: (sessions: ChatSession[]) => void
+  beginNewChat: () => void
+  clearMessages: () => void
   appendUser: (text: string) => void
   appendAssistant: (message: ChatOut) => void
   setPending: (pending: boolean) => void
@@ -26,11 +32,13 @@ interface ChatState {
 
 export const useChatStore = create<ChatState>()((set) => ({
   messages: [],
+  session: null,
+  sessions: [],
   pending: false,
   error: null,
   hydrated: false,
 
-  setHistory: (messages) =>
+  hydrate: (session, messages) =>
     set({
       messages: messages.map((message) => ({
         id: message.id,
@@ -39,9 +47,24 @@ export const useChatStore = create<ChatState>()((set) => ({
         text: message.text,
         reply: message.reply,
       })),
+      session,
       hydrated: true,
       error: null,
     }),
+
+  setSession: (session) => set({ session }),
+  setSessions: (sessions) => set({ sessions }),
+
+  beginNewChat: () =>
+    set({
+      messages: [],
+      session: null,
+      pending: false,
+      error: null,
+      hydrated: true,
+    }),
+
+  clearMessages: () => set({ messages: [], error: null }),
 
   appendUser: (text) =>
     set((state) => ({
@@ -73,5 +96,12 @@ export const useChatStore = create<ChatState>()((set) => ({
   setPending: (pending) => set({ pending }),
   setError: (error) => set({ error }),
   reset: () =>
-    set({ messages: [], pending: false, error: null, hydrated: false }),
+    set({
+      messages: [],
+      session: null,
+      sessions: [],
+      pending: false,
+      error: null,
+      hydrated: false,
+    }),
 }))

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, object_session
 
 from app.core.config import get_settings
 from app.core.errors import AppError
-from app.models.chat import ChatMessage
+from app.models.chat import ChatMessage, ChatSession
 from app.models.course import Course
 from app.models.document import Document
 from app.models.mastery import TopicMastery
@@ -85,6 +85,7 @@ def delete_all_user_data(user: User) -> None:
         db.execute(delete(Quiz).where(Quiz.user_id == user_id))
         db.execute(delete(StudyPlan).where(StudyPlan.user_id == user_id))
         db.execute(delete(ChatMessage).where(ChatMessage.user_id == user_id))
+        db.execute(delete(ChatSession).where(ChatSession.user_id == user_id))
         db.execute(delete(Document).where(Document.user_id == user_id))
         if course is not None:
             db.execute(delete(Topic).where(Topic.course_id == course.id))

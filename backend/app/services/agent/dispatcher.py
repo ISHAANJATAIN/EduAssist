@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import uuid
+
 from pydantic import ValidationError
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import AppError
-from app.models.chat import ChatMessage
+from app.db.base import utcnow
+from app.models.chat import ChatMessage, ChatSession
 from app.models.course import Course
 from app.models.document import Document
 from app.models.topic import Topic
@@ -112,10 +115,42 @@ def _planner_reply(
     return "planner", PlanReply(plan=create_plan(db, user, payload))
 
 
+def _session_title(
+    message: str, user: User, session: ChatSession, db: Session
+) -> str:
+    if message.startswith("/"):
+        count = db.scalar(
+            select(func.count())
+            .select_from(ChatSession)
+            .where(
+                ChatSession.user_id == user.id,
+                ChatSession.id != session.id,
+            )
+        )
+        return f"Conversation {(count or 0) + 1}"
+    return " ".join(message.split())[:60]
+
+
+def _session(user: User, session_id: uuid.UUID | None, db: Session) -> ChatSession:
+    if session_id is not None:
+        session = db.get(ChatSession, session_id)
+        if session is None or session.user_id != user.id:
+            raise AppError("not_found", "Conversation not found.", 404)
+        return session
+    session = ChatSession(user_id=user.id)
+    db.add(session)
+    db.flush()
+    return session
+
+
 def dispatch(user: User, payload: ChatIn, db: Session) -> ChatOut:
     user_id = user.id
     db.scalar(select(User).where(User.id == user_id).with_for_update())
     db.expire_all()
+    session = _session(user, payload.session_id, db)
+    if session.title is None:
+        session.title = _session_title(payload.message, user, session, db)
+    session.updated_at = utcnow()
     requested = payload.intent or detect_intent(payload.message)
     course = _course(db, user)
     topics = _topics(db, course)
@@ -140,6 +175,7 @@ def dispatch(user: User, payload: ChatIn, db: Session) -> ChatOut:
 
     user_row = ChatMessage(
         user_id=user.id,
+        session_id=session.id,
         role="user",
         intent=intent,
         payload={"text": payload.message},
@@ -149,6 +185,7 @@ def dispatch(user: User, payload: ChatIn, db: Session) -> ChatOut:
 
     assistant_row = ChatMessage(
         user_id=user.id,
+        session_id=session.id,
         role="assistant",
         intent=None,
         payload=reply.model_dump(mode="json"),
@@ -157,4 +194,9 @@ def dispatch(user: User, payload: ChatIn, db: Session) -> ChatOut:
     db.commit()
     db.refresh(assistant_row)
 
-    return ChatOut(message_id=assistant_row.id, intent=intent, reply=reply)
+    return ChatOut(
+        message_id=assistant_row.id,
+        session_id=session.id,
+        intent=intent,
+        reply=reply,
+    )

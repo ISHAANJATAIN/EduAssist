@@ -60,9 +60,9 @@ def test_grounded_answer_is_saved_and_returned_in_history(
     assert body["reply"]["citations"][0]["filename"] == "notes.pdf"
     assert body["message_id"]
 
-    history = client.get("/api/chat/history", headers=headers)
+    history = client.get("/api/chat/sessions/latest", headers=headers)
     assert history.status_code == 200
-    rows = history.json()
+    rows = history.json()["messages"]
     assert [row["role"] for row in rows] == ["user", "assistant"]
     assert rows[0]["text"] == "What is a deadlock?"
     assert rows[0]["intent"] == "rag"
@@ -145,7 +145,7 @@ def test_tracker_intent_returns_performance_and_recommendations(
     assert body["reply"]["summary"]["topics"][0]["status"] == "untested"
     assert body["reply"]["recommendations"][0]["action"] == "take_quiz"
 
-    rows = client.get("/api/chat/history", headers=headers).json()
+    rows = client.get("/api/chat/sessions/latest", headers=headers).json()["messages"]
     assert [row["role"] for row in rows] == ["user", "assistant"]
     assert rows[0]["intent"] == "tracker"
     assert rows[1]["reply"] == body["reply"]
@@ -169,7 +169,7 @@ def test_planner_intent_asks_for_an_exam_date(
     assert body["reply"]["missing"] == ["exam_date"]
     assert "exam date" in body["reply"]["text"].casefold()
 
-    rows = client.get("/api/chat/history", headers=headers).json()
+    rows = client.get("/api/chat/sessions/latest", headers=headers).json()["messages"]
     assert [row["intent"] for row in rows] == ["clarify", None]
 
 
@@ -208,19 +208,18 @@ def test_quiz_intent_returns_a_quiz_and_saves_it(
     assert body["reply"]["quiz"]["items"][0]["question"].startswith("What does")
     assert "correct_index" not in body["reply"]["quiz"]["items"][0]
 
-    rows = client.get("/api/chat/history", headers=headers).json()
+    rows = client.get("/api/chat/sessions/latest", headers=headers).json()["messages"]
     assert [row["role"] for row in rows] == ["user", "assistant"]
     assert rows[0]["intent"] == "quiz"
     assert rows[1]["reply"] == body["reply"]
 
 
-def test_history_limit_must_be_positive(client: TestClient) -> None:
+def test_legacy_history_endpoint_is_gone(client: TestClient) -> None:
     headers = _auth(client, "limit@bmu.edu.in")
 
-    response = client.get("/api/chat/history?limit=0", headers=headers)
+    response = client.get("/api/chat/history", headers=headers)
 
-    assert response.status_code == 422
-    assert response.json()["code"] == "validation_error"
+    assert response.status_code == 404
 
 
 def test_history_is_scoped_to_the_current_user(
@@ -236,5 +235,11 @@ def test_history_is_scoped_to_the_current_user(
 
     client.post("/api/chat", headers=first, json={"message": "What is mine?"})
 
-    assert client.get("/api/chat/history", headers=second).json() == []
-    assert len(client.get("/api/chat/history", headers=first).json()) == 2
+    assert client.get("/api/chat/sessions/latest", headers=second).json() == {
+        "session": None,
+        "messages": [],
+    }
+    assert (
+        len(client.get("/api/chat/sessions/latest", headers=first).json()["messages"])
+        == 2
+    )

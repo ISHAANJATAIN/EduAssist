@@ -221,7 +221,10 @@ def test_chat_planner_returns_validation_error_for_excessive_horizon(client, dat
 
     assert response.status_code == 422
     assert response.json()["code"] == "validation_error"
-    assert client.get("/api/chat/history", headers=headers).json() == []
+    assert client.get("/api/chat/sessions/latest", headers=headers).json() == {
+        "session": None,
+        "messages": [],
+    }
 
 
 @pytest.mark.parametrize("selected_only", [True, False])

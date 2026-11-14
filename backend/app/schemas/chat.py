@@ -59,10 +59,12 @@ class ChatIn(BaseModel):
         str, StringConstraints(strip_whitespace=True, min_length=1, max_length=4000)
     ]
     intent: Intent | None = None
+    session_id: uuid.UUID | None = None
 
 
 class ChatOut(BaseModel):
     message_id: uuid.UUID
+    session_id: uuid.UUID
     intent: ReplyIntent
     reply: ChatReply
 
@@ -74,3 +76,15 @@ class ChatMessageOut(BaseModel):
     created_at: datetime
     text: str | None = None
     reply: ChatReply | None = None
+
+
+class ChatSessionOut(BaseModel):
+    id: uuid.UUID
+    title: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ChatSessionLatestOut(BaseModel):
+    session: ChatSessionOut | None = None
+    messages: list[ChatMessageOut] = Field(default_factory=list)

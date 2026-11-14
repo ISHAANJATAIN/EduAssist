@@ -427,7 +427,7 @@ def test_planner_chat_uses_course_settings(client: TestClient) -> None:
     assert body["reply"]["type"] == "plan"
     assert body["reply"]["plan"]["exam_date"] == exam_date.isoformat()
 
-    rows = client.get("/api/chat/history", headers=headers).json()
+    rows = client.get("/api/chat/sessions/latest", headers=headers).json()["messages"]
     assert [row["role"] for row in rows] == ["user", "assistant"]
     assert rows[0]["intent"] == "planner"
     assert rows[1]["reply"] == body["reply"]

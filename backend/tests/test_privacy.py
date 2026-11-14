@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db.session import SessionLocal
-from app.models.chat import ChatMessage
+from app.models.chat import ChatMessage, ChatSession
 from app.models.course import Course
 from app.models.document import Document
 from app.models.mastery import TopicMastery
@@ -152,7 +152,15 @@ def test_delete_my_data_wipes_rows_files_and_vectors(
     assert not path.exists()
 
     with SessionLocal() as db:
-        for model in (Document, TopicMastery, Quiz, QuizAttempt, StudyPlan, ChatMessage):
+        for model in (
+            Document,
+            TopicMastery,
+            Quiz,
+            QuizAttempt,
+            StudyPlan,
+            ChatMessage,
+            ChatSession,
+        ):
             count = db.scalar(
                 select(func.count()).select_from(model).where(model.user_id == user_id)
             )

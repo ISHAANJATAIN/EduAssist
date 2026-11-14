@@ -23,7 +23,7 @@ const userB = { ...userA, id: 'b', name: 'Test B', email: 'b@example.invalid' }
 const plan = { id: 'plan-a', exam_date: '2026-12-01', feasible: true, days: [], notes: [] }
 const course = { id: 'course-a', name: 'A course', exam_date: null, free_hours_per_day: 2 }
 const topic = { id: 'topic-a', name: 'A topic', description: null, prerequisite_ids: [] }
-const reply = { message_id: 'reply-a', intent: 'planner', reply: { type: 'plan', plan } }
+const reply = { message_id: 'reply-a', session_id: 'session-a', intent: 'planner', reply: { type: 'plan', plan } }
 const originalAdapter = api.defaults.adapter
 const requests: { config: InternalAxiosRequestConfig; resolve: (value: AxiosResponse) => void; reject: (cause: unknown) => void }[] = []
 
@@ -54,13 +54,20 @@ async function respond(url: string, data: unknown) {
   await act(async () => request.resolve({ config: request.config, data, status: 200, statusText: 'OK', headers: {} }))
 }
 
+function resolveNow(config: InternalAxiosRequestConfig, data: unknown): Promise<AxiosResponse> {
+  return Promise.resolve({ config, data, status: 200, statusText: 'OK', headers: {} })
+}
+
 beforeEach(() => {
   queryClient.clear()
   queryClient.setDefaultOptions({ queries: { retry: false }, mutations: { retry: false } })
   useChatStore.getState().reset()
   useAuthStore.getState().setSession('a-token', userA)
   requests.length = 0
-  api.defaults.adapter = (config) => new Promise((resolve, reject) => requests.push({ config, resolve, reject }))
+  api.defaults.adapter = (config) => {
+    if (config.url === '/chat/sessions') return resolveNow(config, [])
+    return new Promise((resolve, reject) => requests.push({ config, resolve, reject }))
+  }
 })
 afterEach(() => { cleanup(); queryClient.clear(); api.defaults.adapter = originalAdapter })
 
@@ -199,8 +206,8 @@ describe('history hydration', () => {
     act(() => result.current.send('too early'))
     await act(async () => { await Promise.resolve() })
     expect(useChatStore.getState().messages).toEqual([])
-    expect(requests.map((r) => r.config.url)).toEqual(['/chat/history'])
-    await respond('/chat/history', [{ id: 'old', role: 'user', created_at: '2026-01-01T00:00:00Z', text: 'history', reply: null }])
+    expect(requests.map((r) => r.config.url)).toEqual(['/chat/sessions/latest'])
+    await respond('/chat/sessions/latest', { session: null, messages: [{ id: 'old', role: 'user', created_at: '2026-01-01T00:00:00Z', text: 'history', reply: null }] })
     await waitFor(() => expect(useChatStore.getState().hydrated).toBe(true))
     act(() => result.current.send('new message'))
     await respond('/chat', reply)
@@ -220,7 +227,7 @@ describe('history hydration', () => {
     expect(useChatStore.getState().messages).toEqual([])
     expect(requests).toHaveLength(0)
     act(() => result.current.retryHistory())
-    await respond('/chat/history', [])
+    await respond('/chat/sessions/latest', { session: null, messages: [] })
     await waitFor(() => expect(result.current.canSend).toBe(true))
     expect(result.current.historyError).toBeNull()
   })
@@ -229,7 +236,7 @@ describe('history hydration', () => {
     const { result } = renderHook(() => useChat(), { wrapper })
     await waitFor(() => expect(requests).toHaveLength(1))
     act(() => useAuthStore.getState().setSession('b-token', userB))
-    await respond('/chat/history', [{ id: 'a-history', role: 'user', created_at: '2026-01-01T00:00:00Z', text: 'A secret', reply: null }])
+    await respond('/chat/sessions/latest', { session: null, messages: [{ id: 'a-history', role: 'user', created_at: '2026-01-01T00:00:00Z', text: 'A secret', reply: null }] })
     await act(async () => { await Promise.resolve() })
     expect(result.current.messages).toEqual([])
     expect(useChatStore.getState().hydrated).toBe(false)
@@ -303,7 +310,7 @@ describe('deferred data mutations', () => {
 
   it.each(['logout', 'replacement'] as const)('late chat reply cannot restore A data after %s', async (transition) => {
     const { result } = renderHook(() => useChat(), { wrapper })
-    await respond('/chat/history', [])
+    await respond('/chat/sessions/latest', { session: null, messages: [] })
     await waitFor(() => expect(useChatStore.getState().hydrated).toBe(true))
     act(() => result.current.send('Build my plan', 'planner'))
     await waitFor(() => expect(requests.some((r) => r.config.url === '/chat')).toBe(true))
@@ -322,12 +329,12 @@ describe('deferred data mutations', () => {
 
   it('B can send after hydration without waiting for A pending request', async () => {
     const { result } = renderHook(() => useChat(), { wrapper })
-    await respond('/chat/history', [])
+    await respond('/chat/sessions/latest', { session: null, messages: [] })
     await waitFor(() => expect(useChatStore.getState().hydrated).toBe(true))
     act(() => result.current.send('A private message'))
     await waitFor(() => expect(requests.some((r) => r.config.url === '/chat')).toBe(true))
     act(() => useAuthStore.getState().setSession('b-token', userB))
-    await respond('/chat/history', [])
+    await respond('/chat/sessions/latest', { session: null, messages: [] })
     await waitFor(() => expect(useChatStore.getState().hydrated).toBe(true))
     expect(result.current.canSend).toBe(true)
     act(() => result.current.send('B private message'))
@@ -335,14 +342,14 @@ describe('deferred data mutations', () => {
     await respond('/chat', reply)
     expect(useChatStore.getState().pending).toBe(true)
     expect(useChatStore.getState().messages.map((m) => m.text)).toEqual(['B private message'])
-    await respond('/chat', { message_id: 'reply-b', intent: 'clarify', reply: { type: 'clarify', text: 'B response', missing: [] } })
+    await respond('/chat', { message_id: 'reply-b', session_id: 'session-b', intent: 'clarify', reply: { type: 'clarify', text: 'B response', missing: [] } })
     await waitFor(() => expect(result.current.pending).toBe(false))
     expect(useChatStore.getState().messages.map((m) => m.id)).toEqual([expect.stringMatching(/^local-/), 'reply-b'])
   })
 
   it.each(['replacement', 'privacy'] as const)('an obsolete retry callback cannot resend old messages after %s', async (transition) => {
     const { result } = renderHook(() => useChat(), { wrapper })
-    await respond('/chat/history', [])
+    await respond('/chat/sessions/latest', { session: null, messages: [] })
     await waitFor(() => expect(useChatStore.getState().hydrated).toBe(true))
     act(() => result.current.send('old private message'))
     await waitFor(() => expect(requests).toHaveLength(1))
@@ -354,7 +361,7 @@ describe('deferred data mutations', () => {
       if (transition === 'replacement') useAuthStore.getState().setSession('b-token', userB)
       else useAuthStore.getState().resetData()
     })
-    await respond('/chat/history', [])
+    await respond('/chat/sessions/latest', { session: null, messages: [] })
     await waitFor(() => expect(useChatStore.getState().hydrated).toBe(true))
     act(() => obsoleteRetry())
     await act(async () => { await Promise.resolve() })
@@ -364,7 +371,7 @@ describe('deferred data mutations', () => {
 
   it('late chat error cannot overwrite the new session error/pending state', async () => {
     const { result } = renderHook(() => useChat(), { wrapper })
-    await respond('/chat/history', [])
+    await respond('/chat/sessions/latest', { session: null, messages: [] })
     await waitFor(() => expect(useChatStore.getState().hydrated).toBe(true))
     act(() => result.current.send('A message'))
     await waitFor(() => expect(requests.some((r) => r.config.url === '/chat')).toBe(true))

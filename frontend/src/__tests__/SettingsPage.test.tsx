@@ -46,7 +46,8 @@ beforeEach(() => {
   requests.length = 0
   api.defaults.adapter = (config) => {
     if (config.method === 'get' && config.url === '/course') return Promise.resolve({ config, data: course, status: 200, statusText: 'OK', headers: {} })
-    if (config.url === '/chat/history') return Promise.resolve({ config, data: [], status: 200, statusText: 'OK', headers: {} })
+    if (config.url === '/chat/sessions/latest') return Promise.resolve({ config, data: { session: null, messages: [] }, status: 200, statusText: 'OK', headers: {} })
+    if (config.url === '/chat/sessions') return Promise.resolve({ config, data: [], status: 200, statusText: 'OK', headers: {} })
     return new Promise((resolve) => requests.push({ config, resolve }))
   }
 })

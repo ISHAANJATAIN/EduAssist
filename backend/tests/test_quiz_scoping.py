@@ -224,6 +224,6 @@ def test_chat_quiz_warning_is_kept_in_history(client: TestClient, monkeypatch) -
     warning = response.json()["reply"]["quiz"]["warning"]
     assert "1 of the 5" in warning
 
-    history = client.get("/api/chat/history", headers=headers).json()
+    history = client.get("/api/chat/sessions/latest", headers=headers).json()["messages"]
     assistant = next(row for row in history if row["role"] == "assistant")
     assert assistant["reply"]["quiz"]["warning"] == warning

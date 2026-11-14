@@ -315,18 +315,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/chat/history": {
+    "/api/chat/sessions": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Chat History */
-        get: operations["chat_history_api_chat_history_get"];
+        /** List Sessions */
+        get: operations["list_sessions_api_chat_sessions_get"];
+        put?: never;
+        /** Create Session */
+        post: operations["create_session_api_chat_sessions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chat/sessions/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Latest Session */
+        get: operations["latest_session_api_chat_sessions_latest_get"];
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chat/sessions/{session_id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Session Messages */
+        get: operations["session_messages_api_chat_sessions__session_id__messages_get"];
+        put?: never;
+        post?: never;
+        /** Clear Session */
+        delete: operations["clear_session_api_chat_sessions__session_id__messages_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -433,6 +469,8 @@ export interface components {
             message: string;
             /** Intent */
             intent?: ("rag" | "quiz" | "tracker" | "planner") | null;
+            /** Session Id */
+            session_id?: string | null;
         };
         /** ChatMessageOut */
         ChatMessageOut: {
@@ -466,12 +504,43 @@ export interface components {
              */
             message_id: string;
             /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /**
              * Intent
              * @enum {string}
              */
             intent: "rag" | "quiz" | "tracker" | "planner" | "clarify";
             /** Reply */
             reply: components["schemas"]["AnswerReply"] | components["schemas"]["QuizReply"] | components["schemas"]["PerformanceReply"] | components["schemas"]["PlanReply"] | components["schemas"]["ClarifyReply"];
+        };
+        /** ChatSessionLatestOut */
+        ChatSessionLatestOut: {
+            session?: components["schemas"]["ChatSessionOut"] | null;
+            /** Messages */
+            messages?: components["schemas"]["ChatMessageOut"][];
+        };
+        /** ChatSessionOut */
+        ChatSessionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
         /** CitationOut */
         CitationOut: {
@@ -1535,11 +1604,9 @@ export interface operations {
             };
         };
     };
-    chat_history_api_chat_history_get: {
+    list_sessions_api_chat_sessions_get: {
         parameters: {
-            query?: {
-                limit?: number;
-            };
+            query?: never;
             header?: never;
             path?: never;
             cookie?: never;
@@ -1552,8 +1619,99 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": components["schemas"]["ChatSessionOut"][];
+                };
+            };
+        };
+    };
+    create_session_api_chat_sessions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatSessionOut"];
+                };
+            };
+        };
+    };
+    latest_session_api_chat_sessions_latest_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatSessionLatestOut"];
+                };
+            };
+        };
+    };
+    session_messages_api_chat_sessions__session_id__messages_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "application/json": components["schemas"]["ChatMessageOut"][];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clear_session_api_chat_sessions__session_id__messages_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
