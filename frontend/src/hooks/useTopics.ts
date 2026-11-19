@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
   createTopic,
+  deleteAllTopics,
   deleteTopic,
   extractTopics,
   listTopics,
@@ -47,6 +48,18 @@ export function useDeleteTopic() {
 
   return useMutation({
     mutationFn: (topicId: string) => deleteTopic(topicId),
+    onMutate: captureSessionGeneration,
+    onSuccess: (_data, _variables, generation) => {
+      if (isCurrentSession(generation)) return queryClient.invalidateQueries({ queryKey: topicsKey })
+    },
+  })
+}
+
+export function useDeleteAllTopics() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: deleteAllTopics,
     onMutate: captureSessionGeneration,
     onSuccess: (_data, _variables, generation) => {
       if (isCurrentSession(generation)) return queryClient.invalidateQueries({ queryKey: topicsKey })

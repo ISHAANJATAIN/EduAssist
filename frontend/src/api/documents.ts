@@ -31,3 +31,7 @@ export async function uploadDocument(
 export async function deleteDocument(documentId: string): Promise<void> {
   await api.delete(`/documents/${documentId}`)
 }
+
+export async function deleteAllDocuments(): Promise<void> {
+  await api.delete('/documents')
+}

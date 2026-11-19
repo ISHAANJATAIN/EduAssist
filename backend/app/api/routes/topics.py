@@ -4,13 +4,14 @@ import logging
 import uuid
 
 from fastapi import APIRouter, status
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 
 from app.api.deps import CurrentUser, DbSession, get_or_create_course
 from app.core.errors import AppError
 from app.models.course import Course
 from app.models.document import Document
-from app.models.topic import Topic
+from app.models.mastery import TopicMastery
+from app.models.topic import Topic, topic_prerequisites
 from app.models.user import User
 from app.schemas.topic import TopicIn, TopicOut
 from app.services.ingestion.parsers import parse_document
@@ -106,6 +107,32 @@ def _list_topics(db, course_id: uuid.UUID) -> list[TopicOut]:
 def list_topics(db: DbSession, user: CurrentUser) -> list[TopicOut]:
     course = get_or_create_course(db, user)
     return _list_topics(db, course.id)
+
+
+@router.delete("", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
+def delete_all_topics(db: DbSession, user: CurrentUser) -> None:
+    course = _locked_course(db, user)
+    topic_ids = list(
+        db.scalars(select(Topic.id).where(Topic.course_id == course.id))
+    )
+
+    try:
+        if topic_ids:
+            db.execute(
+                delete(topic_prerequisites).where(
+                    topic_prerequisites.c.topic_id.in_(topic_ids)
+                    | topic_prerequisites.c.prerequisite_id.in_(topic_ids)
+                )
+            )
+            db.execute(
+                delete(TopicMastery).where(TopicMastery.topic_id.in_(topic_ids))
+            )
+            db.execute(delete(Topic).where(Topic.id.in_(topic_ids)))
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        logger.warning("Could not delete topics for user %s", user.id, exc_info=True)
+        raise AppError("cleanup_failed", "Topic cleanup failed. Please retry.", 503) from exc
 
 
 @router.post("", response_model=TopicOut)

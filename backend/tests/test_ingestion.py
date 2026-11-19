@@ -21,7 +21,8 @@ from app.core.errors import AppError
 from app.db.session import SessionLocal
 from app.models.course import Course
 from app.models.document import Document
-from app.models.topic import Topic
+from app.models.mastery import TopicMastery
+from app.models.topic import Topic, topic_prerequisites
 from app.models.user import User
 from app.services.ingestion import parsers, pipeline, vector_store
 from app.services.ingestion.chunker import chunk_pages
@@ -460,6 +461,56 @@ def test_delete_removes_document_and_file(client, no_ingest, temp_uploads):
     assert client.get("/api/documents", headers=headers).json() == []
 
 
+def test_delete_all_documents_removes_only_the_callers_files(
+    client, no_ingest, temp_uploads
+):
+    owner_headers, _ = _auth(client, "clear-all@bmu.edu.in")
+    _upload(client, owner_headers, name="first.txt")
+    _upload(client, owner_headers, name="second.txt")
+    other_headers, _ = _auth(client, "clear-other@bmu.edu.in")
+    other_id = _upload(client, other_headers, name="keep.txt").json()["id"]
+
+    response = client.delete("/api/documents", headers=owner_headers)
+
+    assert response.status_code == 204
+    assert client.get("/api/documents", headers=owner_headers).json() == []
+    kept = client.get("/api/documents", headers=other_headers).json()
+    assert [document["id"] for document in kept] == [other_id]
+    assert {path.name for path in temp_uploads.rglob("*.txt")} == {f"{other_id}.txt"}
+
+
+def test_delete_all_documents_is_a_noop_when_empty(client):
+    headers, _ = _auth(client, "clear-empty@bmu.edu.in")
+
+    assert client.delete("/api/documents", headers=headers).status_code == 204
+
+
+def test_delete_all_documents_keeps_data_for_retry_when_cleanup_fails(
+    client, no_ingest, temp_uploads, monkeypatch
+):
+    headers, _ = _auth(client, "clear-retry@bmu.edu.in")
+    document_id = _upload(client, headers).json()["id"]
+
+    def broken(*args):
+        raise AppError("cleanup_failed", "Vector cleanup failed. Please retry.", 503)
+
+    monkeypatch.setattr(documents_route, "delete_by_document", broken)
+
+    assert client.delete("/api/documents", headers=headers).status_code == 503
+    assert [
+        document["id"]
+        for document in client.get("/api/documents", headers=headers).json()
+    ] == [document_id]
+    stored = next(temp_uploads.rglob("*.txt"))
+    assert stored.exists()
+
+    monkeypatch.setattr(documents_route, "delete_by_document", lambda *args: None)
+
+    assert client.delete("/api/documents", headers=headers).status_code == 204
+    assert client.get("/api/documents", headers=headers).json() == []
+    assert not stored.exists()
+
+
 def test_pipeline_marks_document_ready(client, no_ingest, temp_uploads, monkeypatch):
     headers, _ = _auth(client, "ready@bmu.edu.in")
     monkeypatch.setattr(pipeline, "add_chunks", lambda *args, **kwargs: None)
@@ -563,6 +614,55 @@ def test_topic_crud_and_prerequisites(client):
     assert client.delete(f"/api/topics/{first['id']}", headers=headers).status_code == 204
     remaining = client.get("/api/topics", headers=headers).json()
     assert [topic["name"] for topic in remaining] == ["Deadlock handling"]
+
+
+def test_delete_all_topics_removes_links_and_mastery_for_the_owner(client):
+    headers, course_id = _auth(client, "topics-clear@bmu.edu.in")
+    first = client.post(
+        "/api/topics", headers=headers, json={"name": "Processes"}
+    ).json()
+    client.post(
+        "/api/topics",
+        headers=headers,
+        json={"name": "Deadlocks", "prerequisite_ids": [first["id"]]},
+    )
+    other_headers, _ = _auth(client, "topics-keep@bmu.edu.in")
+    other = client.post(
+        "/api/topics", headers=other_headers, json={"name": "Foreign"}
+    ).json()
+
+    with SessionLocal() as db:
+        owner_id = db.get(Course, course_id).user_id
+        db.add(
+            TopicMastery(
+                user_id=owner_id,
+                topic_id=uuid.UUID(first["id"]),
+                mastery=55.0,
+                attempts=1,
+            )
+        )
+        db.commit()
+
+    response = client.delete("/api/topics", headers=headers)
+
+    assert response.status_code == 204
+    assert client.get("/api/topics", headers=headers).json() == []
+    kept = client.get("/api/topics", headers=other_headers).json()
+    assert [topic["id"] for topic in kept] == [other["id"]]
+    with SessionLocal() as db:
+        assert db.execute(select(topic_prerequisites)).all() == []
+        assert (
+            db.scalars(
+                select(TopicMastery).where(TopicMastery.user_id == owner_id)
+            ).all()
+            == []
+        )
+
+
+def test_delete_all_topics_is_a_noop_when_empty(client):
+    headers, _ = _auth(client, "topics-empty@bmu.edu.in")
+
+    assert client.delete("/api/topics", headers=headers).status_code == 204
 
 
 def test_topic_rejects_self_and_cross_course_prerequisites(client):

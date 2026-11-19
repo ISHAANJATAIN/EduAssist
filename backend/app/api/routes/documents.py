@@ -186,6 +186,29 @@ def list_documents(db: DbSession, user: CurrentUser) -> list[Document]:
     )
 
 
+@router.delete("", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
+def delete_all_documents(db: DbSession, user: CurrentUser) -> None:
+    if lock_user(db, user.id) is None:
+        raise AppError("not_found", "User not found.", 404)
+    documents = list(
+        db.scalars(select(Document).where(Document.user_id == user.id)).all()
+    )
+
+    try:
+        for document in documents:
+            delete_by_document(user.id, document.id)
+            document_path(document.user_id, document.id, document.filename).unlink(
+                missing_ok=True
+            )
+        for document in documents:
+            db.delete(document)
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        logger.warning("Could not clean documents for user %s", user.id, exc_info=True)
+        raise AppError("cleanup_failed", "Document cleanup failed. Please retry.", 503) from exc
+
+
 @router.get("/{document_id}", response_model=DocumentOut)
 def get_document(document_id: uuid.UUID, db: DbSession, user: CurrentUser) -> Document:
     return _document_for(db, user, document_id)

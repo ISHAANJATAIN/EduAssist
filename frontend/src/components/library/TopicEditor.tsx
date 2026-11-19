@@ -12,6 +12,7 @@ import {
 import { Spinner } from '@/components/ui/Spinner'
 import {
   useCreateTopic,
+  useDeleteAllTopics,
   useDeleteTopic,
   useExtractTopics,
   useTopics,
@@ -136,11 +137,13 @@ export function TopicEditor() {
   const createTopic = useCreateTopic()
   const updateTopic = useUpdateTopic()
   const removeTopic = useDeleteTopic()
+  const removeAllTopics = useDeleteAllTopics()
   const extract = useExtractTopics()
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingTopic, setEditingTopic] = useState<TopicOut | null>(null)
   const [confirming, setConfirming] = useState<TopicOut | null>(null)
+  const [clearingTopics, setClearingTopics] = useState(false)
 
   const openCreate = () => {
     setEditingTopic(null)
@@ -169,6 +172,7 @@ export function TopicEditor() {
     createTopic.error ??
     updateTopic.error ??
     removeTopic.error ??
+    removeAllTopics.error ??
     extract.error
 
   return (
@@ -180,7 +184,17 @@ export function TopicEditor() {
             Topics drive mastery, quizzes and the planner.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {topics.data && topics.data.length > 0 ? (
+            <Button
+              variant="danger"
+              aria-label="Delete all topics"
+              onClick={() => setClearingTopics(true)}
+              disabled={removeAllTopics.isPending}
+            >
+              Delete all
+            </Button>
+          ) : null}
           <Button
             variant="secondary"
             onClick={() => extract.mutate()}
@@ -300,6 +314,23 @@ export function TopicEditor() {
           })
         }}
         onCancel={() => setConfirming(null)}
+      />
+
+      <ConfirmDialog
+        open={clearingTopics}
+        title="Delete all topics?"
+        description={`All ${
+          topics.data?.length ?? 0
+        } topics, their prerequisite links and mastery history will be removed. Documents, chats, quizzes and the saved plan stay.`}
+        confirmLabel="Delete all topics"
+        confirmText="DELETE ALL TOPICS"
+        loading={removeAllTopics.isPending}
+        onConfirm={() =>
+          removeAllTopics.mutate(undefined, {
+            onSettled: () => setClearingTopics(false),
+          })
+        }
+        onCancel={() => setClearingTopics(false)}
       />
     </div>
   )

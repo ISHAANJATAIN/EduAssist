@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
+  deleteAllDocuments,
   deleteDocument,
   listDocuments,
   uploadDocument,
@@ -28,6 +29,18 @@ export function useUploadDocument() {
   return useMutation({
     mutationFn: ({ file, docType }: { file: File; docType: DocType }) =>
       uploadDocument(file, docType),
+    onMutate: captureSessionGeneration,
+    onSuccess: (_data, _variables, generation) => {
+      if (isCurrentSession(generation)) return queryClient.invalidateQueries({ queryKey: documentsKey })
+    },
+  })
+}
+
+export function useDeleteAllDocuments() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: deleteAllDocuments,
     onMutate: captureSessionGeneration,
     onSuccess: (_data, _variables, generation) => {
       if (isCurrentSession(generation)) return queryClient.invalidateQueries({ queryKey: documentsKey })

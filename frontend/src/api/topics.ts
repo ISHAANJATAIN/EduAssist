@@ -26,6 +26,10 @@ export async function deleteTopic(topicId: string): Promise<void> {
   await api.delete(`/topics/${topicId}`)
 }
 
+export async function deleteAllTopics(): Promise<void> {
+  await api.delete('/topics')
+}
+
 export async function extractTopics(): Promise<TopicOut[]> {
   const { data } = await api.post<TopicOut[]>('/topics/extract')
   return data

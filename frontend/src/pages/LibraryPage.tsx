@@ -6,10 +6,12 @@ import type { DocumentOut } from '@/api/documents'
 import { DocumentList } from '@/components/library/DocumentList'
 import { TopicEditor } from '@/components/library/TopicEditor'
 import { UploadDropzone } from '@/components/library/UploadDropzone'
+import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ErrorBanner } from '@/components/ui/ErrorBanner'
 import { Spinner } from '@/components/ui/Spinner'
 import {
+  useDeleteAllDocuments,
   useDeleteDocument,
   useDocuments,
   useUploadDocument,
@@ -21,7 +23,9 @@ export function LibraryPage() {
   const documents = useDocuments()
   const upload = useUploadDocument()
   const removeDocument = useDeleteDocument()
+  const removeAllDocuments = useDeleteAllDocuments()
   const [pendingDelete, setPendingDelete] = useState<DocumentOut | null>(null)
+  const [clearingDocuments, setClearingDocuments] = useState(false)
 
   const documentCount = documents.data?.length ?? 0
   const readyHandouts = (documents.data ?? [])
@@ -57,21 +61,34 @@ export function LibraryPage() {
 
       <div className="grid items-start gap-6 lg:grid-cols-5">
         <section className="glass p-6 lg:col-span-3">
-          <div className="flex items-baseline justify-between gap-3">
+          <div className="flex items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-neutral-900">
               Documents
             </h2>
             {documentCount > 0 ? (
-              <span className="text-sm text-neutral-500">
-                {documentCount} file{documentCount === 1 ? '' : 's'}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-neutral-500">
+                  {documentCount} file{documentCount === 1 ? '' : 's'}
+                </span>
+                <Button
+                  variant="danger"
+                  className="h-9 px-4 text-xs"
+                  aria-label="Delete all documents"
+                  onClick={() => setClearingDocuments(true)}
+                  disabled={removeAllDocuments.isPending}
+                >
+                  Delete all
+                </Button>
+              </div>
             ) : null}
           </div>
 
           <div className="mt-4">
-            {removeDocument.error ? (
+            {removeDocument.error || removeAllDocuments.error ? (
               <div className="mb-4">
-                <ErrorBanner error={removeDocument.error} />
+                <ErrorBanner
+                  error={removeDocument.error ?? removeAllDocuments.error}
+                />
               </div>
             ) : null}
 
@@ -120,6 +137,21 @@ export function LibraryPage() {
           })
         }}
         onCancel={() => setPendingDelete(null)}
+      />
+
+      <ConfirmDialog
+        open={clearingDocuments}
+        title="Delete all documents?"
+        description={`All ${documentCount} file${documentCount === 1 ? '' : 's'}, their uploaded copies and indexed chunks will be removed. Topics, chats, quizzes and the saved plan stay.`}
+        confirmLabel="Delete all documents"
+        confirmText="DELETE ALL DOCUMENTS"
+        loading={removeAllDocuments.isPending}
+        onConfirm={() =>
+          removeAllDocuments.mutate(undefined, {
+            onSettled: () => setClearingDocuments(false),
+          })
+        }
+        onCancel={() => setClearingDocuments(false)}
       />
     </div>
   )
