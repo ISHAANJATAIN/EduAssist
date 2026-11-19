@@ -1,8 +1,9 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 
 import { deleteMyData } from '@/api/account'
+import type { CourseOut } from '@/api/course'
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ErrorBanner } from '@/components/ui/ErrorBanner'
@@ -22,13 +23,15 @@ export function SettingsPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [confirming, setConfirming] = useState(false)
+  const [syncedCourse, setSyncedCourse] = useState<CourseOut | null>(null)
 
-  useEffect(() => {
-    if (!course.data) return
+  // Sync during render so a late query response cannot overwrite text already typed.
+  if (course.data && syncedCourse !== course.data) {
+    setSyncedCourse(course.data)
     setName(course.data.name)
     setExamDate(course.data.exam_date ?? '')
     setFreeHours(String(course.data.free_hours_per_day))
-  }, [course.data])
+  }
 
   const remove = useMutation({
     mutationFn: deleteMyData,
