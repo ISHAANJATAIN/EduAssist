@@ -431,3 +431,23 @@ def test_planner_chat_uses_course_settings(client: TestClient) -> None:
     assert [row["role"] for row in rows] == ["user", "assistant"]
     assert rows[0]["intent"] == "planner"
     assert rows[1]["reply"] == body["reply"]
+
+
+def test_building_a_plan_updates_the_course_exam_settings(
+    client: TestClient,
+) -> None:
+    headers = _auth(client, "plannercourse@bmu.edu.in")
+    _set_course(client, headers, date.today() + timedelta(days=4))
+    _topic(client, headers, "Paging")
+    exam_date = date.today() + timedelta(days=7)
+
+    response = client.post(
+        "/api/plans",
+        headers=headers,
+        json={"exam_date": exam_date.isoformat(), "free_hours_per_day": 3},
+    )
+
+    assert response.status_code == 201
+    course = client.get("/api/course", headers=headers).json()
+    assert course["exam_date"] == exam_date.isoformat()
+    assert course["free_hours_per_day"] == 3

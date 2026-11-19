@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { createPlan, getLatestPlan, type PlanIn } from '@/api/planner'
+import { courseKey } from '@/hooks/useCourse'
 
 import { captureSessionGeneration, isCurrentSession } from '@/store/authStore'
 
@@ -23,6 +24,7 @@ export function useCreatePlan() {
     onSuccess: (plan, _variables, generation) => {
       if (!isCurrentSession(generation)) return
       queryClient.setQueryData(planKey, plan)
+      void queryClient.invalidateQueries({ queryKey: courseKey })
     },
   })
 }

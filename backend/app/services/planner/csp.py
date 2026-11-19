@@ -10,6 +10,7 @@ from constraint import BacktrackingSolver, Constraint, Problem
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_or_create_course
 from app.core.errors import AppError
 from app.models.plan import StudyPlan
 from app.models.user import User
@@ -320,6 +321,9 @@ def create_plan(db: Session, user: User, payload: PlanIn) -> PlanOut:
     db.expire_all()
     spec = build_spec(db, user, payload)
     plan = solve_plan(spec)
+    course = get_or_create_course(db, user)
+    course.exam_date = spec.exam_date
+    course.free_hours_per_day = spec.free_hours_per_day
     db.add(
         StudyPlan(
             id=plan.id,
