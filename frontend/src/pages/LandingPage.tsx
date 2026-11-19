@@ -315,11 +315,6 @@ export function LandingPage() {
       <main>
         <section className={`${shell} grid gap-16 pb-24 pt-14 lg:grid-cols-[1.04fr_0.96fr] lg:items-center lg:gap-10 lg:pb-32 lg:pt-24`}>
           <div className="rise">
-            <p className={`${label} flex items-center gap-3`}>
-              <span className="h-px w-8 bg-gold/50" aria-hidden="true" />
-              BMU CSE · Group 10
-            </p>
-
             <h1 className="font-display mt-6 text-[clamp(2.7rem,5.4vw,4.5rem)] font-semibold leading-[0.97] tracking-[-0.035em]">
               Your lectures, turned into answers you can{' '}
               <em className="italic text-brand-500">trust</em>.
@@ -517,9 +512,6 @@ export function LandingPage() {
         <div className={`${shell} flex flex-col gap-6 py-10 sm:flex-row sm:items-center sm:justify-between`}>
           <div className="flex items-center gap-3">
             <Logo size={22} />
-            <span className="font-label text-[10px] uppercase tracking-[0.16em] text-neutral-600">
-              BMU CSE · Group 10 · 2026
-            </span>
           </div>
           <nav aria-label="Footer" className="flex items-center gap-6 text-[13px] text-ink/50">
             <Link to="/login" className="transition hover:text-ink">

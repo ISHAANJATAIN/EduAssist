@@ -48,10 +48,16 @@ describe('LandingPage', () => {
       /local-first · free · one course at a time/i,
       /operating systems · week 4/i,
       /2 sources read · 1.4s/i,
-      /bmu cse · group 10 · 2026/i,
     ]) {
       expect(screen.getByText(text)).toHaveClass('text-neutral-600')
     }
+  })
+
+  it('shows no course or team branding', () => {
+    renderLanding()
+
+    expect(screen.queryByText(/bmu/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/group 10/i)).not.toBeInTheDocument()
   })
 
   it('keeps the dark preview label readable', () => {
