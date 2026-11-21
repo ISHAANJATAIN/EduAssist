@@ -28,7 +28,7 @@ from app.schemas.quiz import (
 from app.services.ingestion.vector_store import ChunkMatch, query
 from app.services.llm.client import get_chat_model
 
-CHUNKS_PER_TOPIC = 3
+CHUNKS_PER_TOPIC = 4
 MAX_EXCERPTS = 40
 BATCH_SIZE = 6
 MAX_BATCH_EXCERPTS = 15
@@ -46,6 +46,10 @@ LLM_ERROR = "The language model could not build the quiz right now. Please try a
 NO_MATERIAL = (
     "Upload study material and wait for it to finish processing, "
     "then add or extract topics first."
+)
+CALCULATION_NOTE = (
+    "The quiz needs at least two questions that require a calculation from the "
+    "excerpt's numbers; include them among the new items."
 )
 
 
@@ -290,12 +294,18 @@ def _avoid_list(items: list[dict], label: str, limit: int = 20) -> str:
 
 
 def _retry_message(
-    human: str, last_error: str, items: list[dict], missing: int, label: str
+    human: str,
+    last_error: str,
+    items: list[dict],
+    missing: int,
+    label: str,
+    extra: str = "",
 ) -> str:
     avoid = f" {_avoid_list(items, label)}"
+    tail = f" {extra}" if extra else ""
     return (
         f"{human}\n\nYour previous reply was invalid: {last_error} "
-        f"Write exactly {missing} new item(s).{avoid} "
+        f"Write exactly {missing} new item(s).{tail}{avoid} "
         "Reply again with JSON only, following the output shape exactly."
     )
 
@@ -319,11 +329,17 @@ def _run_round(
         human += f"\n\n{avoid}"
     added = 0
     last_error = "No usable items were returned."
+    needs_calculations = payload.kind == "quiz" and requested >= 5
 
     for attempt in range(attempts):
         if attempt:
             human = _retry_message(
-                human, last_error, items, requested - added, label
+                human,
+                last_error,
+                items,
+                requested - added,
+                label,
+                CALCULATION_NOTE if needs_calculations else "",
             )
 
         raw = _invoke(system, human)

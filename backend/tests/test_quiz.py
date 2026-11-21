@@ -9,6 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.core.config import get_settings
+from app.prompts import load_prompt
 
 from app.services.ingestion.vector_store import ChunkMatch
 from app.services.quiz import generator
@@ -586,3 +587,46 @@ def test_quizzes_require_authentication(client: TestClient) -> None:
     response = client.post("/api/quizzes", json={"kind": "quiz"})
 
     assert response.status_code == 401
+
+
+def test_quiz_prompt_demands_calculation_items() -> None:
+    text = load_prompt("quiz_generation").casefold()
+
+    assert "at least two" in text
+    assert "calculation" in text
+    assert "320" in text
+
+
+def test_retry_message_includes_extra_instruction() -> None:
+    message = generator._retry_message(
+        "base", "bad shape", [], 3, "question", "CALC: compute from the excerpt."
+    )
+
+    assert "base" in message
+    assert "CALC: compute from the excerpt." in message
+
+
+def test_retry_message_without_extra_has_no_calculation_note() -> None:
+    message = generator._retry_message("base", "bad shape", [], 3, "question")
+
+    assert "calculation" not in message.casefold()
+
+
+def test_quiz_collects_four_chunks_per_topic(client, monkeypatch) -> None:
+    headers = _auth(client, "chunks@bmu.edu.in")
+    _topic(client, headers)
+    seen: dict[str, int] = {}
+
+    def fake_query(user_id, text, k, document_ids=None):
+        seen["k"] = k
+        return [_chunk(index) for index in range(k)]
+
+    monkeypatch.setattr(generator, "query", fake_query)
+    _patch_llm(monkeypatch, [_quiz_reply([_question("What does deadlock require?", 0)])])
+
+    response = client.post(
+        "/api/quizzes", headers=headers, json={"kind": "quiz", "num_items": 1}
+    )
+
+    assert response.status_code == 201
+    assert seen["k"] == 4
